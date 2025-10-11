@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>SecondBrain - Login</title>
+  <link rel="stylesheet" href="./auth.css" />
+  <!-- Configuration -->
+  <script src="./config.js"></script>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="brand-section">
+        <h1 class="brand-title">🧠 SecondBrain</h1>
+        <p class="brand-subtitle">Your AI-Powered Knowledge Network</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="auth-form">
+        <h2>Welcome Back</h2>
+        <div class="form-group">
+          <input type="text" id="loginUsername" placeholder="Username" value="noel" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="loginPassword" placeholder="Password" value="secret123" required />
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+        <p class="form-footer">
+          Don't have an account? 
+          <a href="#" id="showRegister">Create one</a>
+        </p>
+        <div class="demo-notice" style="margin-top: 10px; padding: 8px; background: rgba(94, 227, 255, 0.1); border: 1px solid #5ee3ff; border-radius: 4px; font-size: 12px; text-align: center;">
+          📝 Demo credentials are pre-filled. Try exploring business notes!
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" class="auth-form hidden">
+        <h2>Create Account</h2>
+        <div class="form-group">
+          <input type="text" id="registerUsername" placeholder="Username" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="registerPassword" placeholder="Password" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+        </div>
+        <button type="submit" class="btn-primary">Create Account</button>
+        <p class="form-footer">
+          Already have an account? 
+          <a href="#" id="showLogin">Sign in</a>
+        </p>
+      </form>
+
+      <!-- Backend URL Configuration -->
+      <div class="config-section">
+        <details>
+          <summary>⚙️ Backend Configuration</summary>
+          <div class="form-group">
+            <input type="text" id="backendUrl" placeholder="Backend URL" value="http://127.0.0.1:8000" />
+            <button type="button" id="saveBackend">Save</button>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Background Animation -->
+    <div class="bg-animation">
+      <div class="neural-node"></div>
+      <div class="neural-node"></div>
+      <div class="neural-node"></div>
+      <div class="neural-node"></div>
+      <div class="neural-node"></div>
+    </div>
+  </div>
+
+  <script src="./auth.js"></script>
+</body>
+</html>

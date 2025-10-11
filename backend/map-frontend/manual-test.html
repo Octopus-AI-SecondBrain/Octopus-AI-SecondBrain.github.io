@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manual Auth Flow Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #000; color: #0f0; }
+        button { padding: 10px; margin: 5px; background: #333; color: #0f0; border: 1px solid #0f0; }
+        .step { margin: 10px 0; padding: 10px; border: 1px solid #333; }
+        .success { border-color: #0f0; }
+        .error { border-color: #f00; color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>🧠 Manual Authentication Flow Test</h1>
+    
+    <div class="step">
+        <h3>Step 1: Clear Auth State</h3>
+        <button onclick="clearAuth()">Clear Authentication</button>
+        <div id="clearResult"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 2: Test Backend Connection</h3>
+        <button onclick="testBackend()">Test Backend</button>
+        <div id="backendResult"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 3: Perform Login</h3>
+        <input type="text" id="username" value="testuser" placeholder="Username">
+        <input type="password" id="password" value="testpass123" placeholder="Password">
+        <button onclick="performLogin()">Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 4: Test Protected Endpoint</h3>
+        <button onclick="testProtected()">Test /auth/me</button>
+        <div id="protectedResult"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 5: Navigate to Main App</h3>
+        <button onclick="goToMainApp()">Go to Main App</button>
+        <div id="navResult"></div>
+    </div>
+    
+    <script>
+        function log(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            const div = document.createElement('div');
+            div.textContent = message;
+            div.style.color = isError ? '#f00' : '#0f0';
+            el.appendChild(div);
+        }
+        
+        function clearAuth() {
+            localStorage.removeItem('sb_token');
+            localStorage.removeItem('sb_backend');
+            document.getElementById('clearResult').innerHTML = '';
+            log('clearResult', '✅ Authentication cleared');
+        }
+        
+        async function testBackend() {
+            document.getElementById('backendResult').innerHTML = '';
+            try {
+                const response = await fetch('http://localhost:8000/');
+                const data = await response.json();
+                log('backendResult', `✅ Backend connected: ${JSON.stringify(data)}`);
+            } catch (error) {
+                log('backendResult', `❌ Backend error: ${error.message}`, true);
+            }
+        }
+        
+        async function performLogin() {
+            document.getElementById('loginResult').innerHTML = '';
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.set('username', username);
+                formData.set('password', password);
+                
+                const response = await fetch('http://localhost:8000/auth/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('sb_token', data.access_token);
+                    log('loginResult', `✅ Login successful! Token stored.`);
+                } else {
+                    const errorText = await response.text();
+                    log('loginResult', `❌ Login failed: ${errorText}`, true);
+                }
+            } catch (error) {
+                log('loginResult', `❌ Login error: ${error.message}`, true);
+            }
+        }
+        
+        async function testProtected() {
+            document.getElementById('protectedResult').innerHTML = '';
+            const token = localStorage.getItem('sb_token');
+            
+            if (!token) {
+                log('protectedResult', '❌ No token available', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('protectedResult', `✅ Protected endpoint works: ${JSON.stringify(data)}`);
+                } else {
+                    const errorText = await response.text();
+                    log('protectedResult', `❌ Protected endpoint failed: ${errorText}`, true);
+                }
+            } catch (error) {
+                log('protectedResult', `❌ Protected endpoint error: ${error.message}`, true);
+            }
+        }
+        
+        function goToMainApp() {
+            document.getElementById('navResult').innerHTML = '';
+            const token = localStorage.getItem('sb_token');
+            
+            if (!token) {
+                log('navResult', '❌ No token available, cannot navigate', true);
+                return;
+            }
+            
+            log('navResult', '🔄 Navigating to main app...');
+            setTimeout(() => {
+                window.location.href = './index.html';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

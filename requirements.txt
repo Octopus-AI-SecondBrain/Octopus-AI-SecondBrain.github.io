@@ -1,0 +1,14 @@
+fastapi==0.117.1
+uvicorn[standard]==0.36.0
+python-multipart==0.0.20
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+slowapi==0.1.9
+sqlalchemy==2.0.43
+numpy>=2.3.0
+setuptools
+scikit-learn==1.7.2
+python-dotenv==1.1.1
+pydantic==2.11.9
+chromadb>=1.1.0
+openai>=1.108.0
