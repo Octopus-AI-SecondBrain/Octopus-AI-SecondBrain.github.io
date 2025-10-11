@@ -175,6 +175,17 @@ class CORSSettings(BaseModel):
         ge=0,
         description="CORS preflight cache time in seconds"
     )
+    
+    @field_validator('allowed_origins', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ORIGINS environment variable."""
+        env_origins = os.getenv("CORS_ORIGINS")
+        if env_origins:
+            # Split by comma and clean up
+            origins = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
+            return origins
+        return v if isinstance(v, list) else [v]
 
 
 class RateLimitSettings(BaseModel):

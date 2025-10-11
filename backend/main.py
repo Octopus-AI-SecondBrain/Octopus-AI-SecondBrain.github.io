@@ -119,11 +119,29 @@ async def log_requests(request: Request, call_next):
     )
     return response
 
+# Configure allowed hosts for TrustedHostMiddleware
+allowed_hosts = ["localhost", "127.0.0.1", "*.localhost", "*.onrender.com"]
+
+# Add CORS origins as allowed hosts
+if hasattr(settings, 'cors') and settings.cors.allowed_origins:
+    for origin in settings.cors.allowed_origins:
+        # Extract domain from URL
+        if origin != "*":
+            domain = origin.replace("https://", "").replace("http://", "").split("/")[0]
+            if domain and domain not in allowed_hosts:
+                allowed_hosts.append(domain)
+
+logger.info(f"Configuring trusted hosts: {allowed_hosts}")
+
 # Security middleware
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.localhost"]
+    allowed_hosts=allowed_hosts
 )
+
+# Configure CORS origins
+allowed_origins = settings.cors.allowed_origins
+logger.info(f"Configuring CORS for origins: {allowed_origins}")
 
 # CORS middleware
 app.add_middleware(
