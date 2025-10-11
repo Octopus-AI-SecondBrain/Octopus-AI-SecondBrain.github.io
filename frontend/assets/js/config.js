@@ -6,7 +6,7 @@ const CONFIG = {
   // For production: 'https://octopus-fa0y.onrender.com'
   BACKEND_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8000'
-    : 'https://octopus-fa0y.onrender.com',
+    : 'https://octopus-fa0y.onrender.com', // Backend hosted on Render
     
   // Environment detection
   IS_PRODUCTION: window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1',
