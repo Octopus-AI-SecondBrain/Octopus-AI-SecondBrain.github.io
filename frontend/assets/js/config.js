@@ -3,10 +3,10 @@
 const CONFIG = {
   // Backend API URL - Update this for production deployment
   // For local dev: 'http://localhost:8000'
-  // For production: 'https://your-backend-host.onrender.com' or your backend URL
+  // For production: 'https://octopus-fa0y.onrender.com'
   BACKEND_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8000'
-    : 'https://your-backend-host.onrender.com', // CHANGE THIS to your actual backend URL
+    : 'https://octopus-fa0y.onrender.com',
     
   // Environment detection
   IS_PRODUCTION: window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1',

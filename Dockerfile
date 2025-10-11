@@ -21,17 +21,18 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY backend ./backend
 COPY scripts ./scripts
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
-# Create data directories
-RUN mkdir -p /app/data/database /app/data/vector_db
+# Create data directories and make entrypoint executable
+RUN mkdir -p /app/data/database /app/data/vector_db && \
+    chmod +x /app/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
 # Run database initialization and start server
-CMD python -c "from backend.models.db import Base, engine, ensure_sqlite_schema; Base.metadata.create_all(bind=engine); ensure_sqlite_schema()" && \
-    uvicorn backend.main:app --host 0.0.0.0 --port 8000
+CMD ["/app/docker-entrypoint.sh"]
