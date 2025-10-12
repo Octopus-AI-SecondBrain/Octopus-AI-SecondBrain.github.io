@@ -31,11 +31,15 @@ logger.info(
     extra={"environment": settings.environment}
 )
 
-# TODO: Database migrations should be run separately before starting the application
+# IMPORTANT: Database migrations must be run separately before starting the application
 # Run: alembic upgrade head
-# For now, we skip automatic table creation to avoid side effects at import time.
-# Initial setup: Run scripts/start.sh which handles schema initialization.
-logger.info("Database initialization should be done via migrations (see scripts/start.sh)")
+# DO NOT use Base.metadata.create_all() in production - it can cause race conditions
+# and doesn't support proper schema versioning.
+# See scripts/start.sh for the proper startup sequence.
+logger.info(
+    "Database schema should be managed via Alembic migrations. "
+    "Run 'alembic upgrade head' before starting the application."
+)
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)

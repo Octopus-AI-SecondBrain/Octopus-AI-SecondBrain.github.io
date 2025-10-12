@@ -1,13 +1,14 @@
 """
 Authentication routes for SecondBrain API.
 Handles user registration, login, and token management.
+JWTs are stored in secure, httpOnly cookies for enhanced security.
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
-from typing import Annotated
+from typing import Annotated, Optional
 
 from backend.models import db, user
 from backend.core.security import (
@@ -17,9 +18,11 @@ from backend.core.security import (
     decode_access_token,
 )
 from backend.core.logging import get_logger
+from backend.config.config import get_settings
 
 router = APIRouter()
 logger = get_logger("secondbrain.auth")
+settings = get_settings()
 
 
 # --- DB dependency ---
@@ -33,7 +36,21 @@ def get_db():
 
 
 # --- OAuth2 config ---
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+# Custom OAuth2 scheme that reads from cookies instead of Authorization header
+class OAuth2PasswordBearerCookie(OAuth2PasswordBearer):
+    """OAuth2 scheme that supports both cookies and Authorization header."""
+    
+    async def __call__(self, request: Request) -> Optional[str]:
+        # First try to get token from cookie
+        token = request.cookies.get("access_token")
+        if token:
+            return token
+        
+        # Fall back to Authorization header for backward compatibility during transition
+        return await super().__call__(request)
+
+
+oauth2_scheme = OAuth2PasswordBearerCookie(tokenUrl="/auth/token")
 
 
 # --- Pydantic schemas ---
@@ -154,15 +171,18 @@ def signup(
 @router.post("/token", response_model=TokenResponse)
 def login_for_access_token(
     request: Request,
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     """
     Authenticate user and return access token.
+    Token is stored in a secure, httpOnly cookie for enhanced security.
     Rate limited to 10 requests per minute via SlowAPI middleware.
     
     Args:
         request: FastAPI request object
+        response: FastAPI response object
         form_data: OAuth2 form data containing username and password
         db: Database session
         
@@ -195,11 +215,23 @@ def login_for_access_token(
         # Create access token
         access_token = create_access_token({"sub": db_user.username})
         
+        # Set secure, httpOnly cookie
+        # In production with HTTPS, also set secure=True
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,  # Prevents JavaScript access
+            secure=settings.is_production() and settings.enable_https,  # Only send over HTTPS in production
+            samesite="lax",  # CSRF protection
+            max_age=settings.security.access_token_expire_minutes * 60,  # Convert to seconds
+        )
+        
         logger.info(
             f"Login successful for user: {db_user.username}",
             extra={"user_id": db_user.id}
         )
         
+        # Still return token in response for backward compatibility
         return {"access_token": access_token, "token_type": "bearer"}
         
     except HTTPException:
@@ -277,3 +309,19 @@ def read_me(
     """
     logger.debug(f"User info requested: {current_user.username}")
     return current_user
+
+
+@router.post("/logout")
+def logout(response: Response) -> dict:
+    """
+    Logout user by clearing the authentication cookie.
+    
+    Args:
+        response: FastAPI response object
+        
+    Returns:
+        Success message
+    """
+    response.delete_cookie(key="access_token", httponly=True, samesite="lax")
+    logger.info("User logged out successfully")
+    return {"message": "Successfully logged out"}

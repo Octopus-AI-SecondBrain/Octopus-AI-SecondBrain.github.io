@@ -1,64 +1,33 @@
-# SecondBrain Production Readiness Migration Guide
+# SecondBrain Migration Guide (Legacy)
+
+> **⚠️ OUTDATED**: This document is from an earlier version. For the latest migration guide, see:
+> - **[MIGRATION_GUIDE_v2.md](MIGRATION_GUIDE_v2.md)** - Complete v2.0 migration guide with Alembic, cookie auth, and more
 
 ## Overview
 
-This document describes the security and configuration refactor applied to make SecondBrain production-ready. All changes have been tested and are backward-compatible for local development.
+This document describes an earlier security and configuration refactor. The current version (v2.0+) includes additional changes:
+- Cookie-based authentication (replacing localStorage)
+- Alembic database migrations (replacing direct schema creation)
+- Thread-safe vector store
+- Docker Compose support
+- Enhanced security features
 
-## ✅ Changes Summary
+**For new deployments or upgrades, please refer to MIGRATION_GUIDE_v2.md**
 
-### 1. Centralized Configuration (Pydantic Settings)
+---
 
-**Changed:**
-- Replaced `backend/config/settings.py` with a comprehensive Pydantic `Settings` class in `backend/config/config.py`
-- All configuration now comes from environment variables with sensible defaults for local dev
-- Added `get_settings()` helper with caching via `@lru_cache()`
+## Legacy Information (Pre-v2.0)
 
-**Benefits:**
-- Type-safe configuration with validation
-- Single source of truth for all settings
-- Environment-specific configurations (development/staging/production)
-- Support for legacy environment variables (`SECONDBRAIN_DB_URL`, `SECONDBRAIN_CHROMA_PATH`)
+### Database Initialization (Replaced by Alembic)
 
-**Affected Files:**
-- `backend/config/config.py` - New centralized settings
-- `backend/models/db.py` - Now uses `get_settings()`
-- `backend/core/security.py` - Now uses `get_settings()`
-- `backend/services/vector_store.py` - Now uses `get_settings()`
-- `backend/main.py` - Uses settings instance
-
-### 2. Database Initialization
-
-**Changed:**
-- Removed automatic table creation from `backend/main.py` at import time
-- Database schema initialization now happens in `scripts/start.sh`
-- Added TODO comments for future Alembic migration integration
-
-**Benefits:**
-- No side effects during module import
-- Clear separation of concerns
-- Ready for proper migration tool integration
-
-**Migration Steps:**
+The old approach used direct schema creation:
 ```bash
-# Database is now initialized when running:
-./scripts/start.sh
+# OLD METHOD - NO LONGER RECOMMENDED:
+python -c "from backend.models.db import Base, engine; Base.metadata.create_all(bind=engine)"
 
-# Or manually:
-python -c "from backend.models.db import Base, engine, ensure_sqlite_schema; Base.metadata.create_all(bind=engine); ensure_sqlite_schema()"
-
-# Future: alembic upgrade head
+# NEW METHOD - USE THIS INSTEAD:
+alembic upgrade head
 ```
-
-### 3. Rate Limiting
-
-**Changed:**
-- Single `Limiter` instance created in `backend/main.py`
-- Added exception handler for HTTP 429 responses with proper JSON format
-- Rate limiting documented in comments (no decorator approach needed - handled by middleware)
-
-**Benefits:**
-- Consistent rate limiting across all endpoints
-- Proper error responses with retry information
 - Single limiter instance reduces overhead
 
 **Rate Limits:**

@@ -34,12 +34,8 @@ def clean_state():
     db.Base.metadata.drop_all(bind=db.engine)
     db.Base.metadata.create_all(bind=db.engine)
     
-    # For SQLite, ensure schema is up to date (no-op for PostgreSQL)
-    if db.engine.url.drivername.startswith('sqlite'):
-        try:
-            db.ensure_sqlite_schema()
-        except Exception:
-            pass  # Not critical for tests
+    # Note: Schema management is now handled by Alembic in production
+    # For tests, we use create_all() which is acceptable
 
     # Reset vector store
     if vector_store._client is not None:

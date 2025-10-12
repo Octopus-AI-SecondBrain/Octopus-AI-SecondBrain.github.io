@@ -80,10 +80,22 @@ class SecuritySettings(BaseModel):
     @classmethod
     def validate_secret_key(cls, v):
         """Validate secret key strength."""
+        secret_key = os.getenv("SECRET_KEY", v)
         environment = os.getenv("ENVIRONMENT", "development")
-        if v in ("dev-secret-change-me", "your-secret-key-here") and environment == "production":
-            raise ValueError("Must change default secret key in production")
-        return v
+        
+        # Enforce SECRET_KEY requirement in non-development environments
+        if environment != "development":
+            if not secret_key or secret_key in ("dev-secret-change-me", "your-secret-key-here"):
+                raise RuntimeError(
+                    f"SECRET_KEY is required when ENVIRONMENT={environment}. "
+                    "Set a strong SECRET_KEY environment variable."
+                )
+            if len(secret_key) < 32:
+                raise RuntimeError(
+                    f"SECRET_KEY must be at least 32 characters in {environment} environment."
+                )
+        
+        return secret_key
 
 
 class VectorStoreSettings(BaseModel):

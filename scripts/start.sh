@@ -26,20 +26,19 @@ source venv/bin/activate
 echo "🔧 Setting PYTHONPATH to: $PROJECT_ROOT"
 export PYTHONPATH="$PROJECT_ROOT"
 
-# Initialize database if needed
-echo "🗄️  Initializing database..."
-python -c "
-from backend.models.db import Base, engine, ensure_sqlite_schema
-try:
-    Base.metadata.create_all(bind=engine)
-    ensure_sqlite_schema()
-    print('✅ Database initialized successfully')
-except Exception as e:
-    print(f'⚠️  Database initialization warning: {e}')
-"
+# Run Alembic migrations
+echo "🗄️  Running database migrations..."
+alembic upgrade head
 
-# TODO: When Alembic is set up, replace the above with:
-# alembic upgrade head
+if [ $? -eq 0 ]; then
+    echo "✅ Database migrations completed successfully"
+else
+    echo "⚠️  Warning: Database migration had issues. Check alembic configuration."
+    echo "    For first-time setup, you may need to initialize Alembic:"
+    echo "    1. Ensure the database exists"
+    echo "    2. Run: alembic upgrade head"
+    exit 1
+fi
 
 # Start the FastAPI application
 echo "🌟 Starting FastAPI server on http://localhost:8000"

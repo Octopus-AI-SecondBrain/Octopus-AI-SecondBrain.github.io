@@ -3,25 +3,19 @@ set -e
 
 echo "🚀 Starting SecondBrain Backend..."
 
-# Initialize database schema
-echo "📦 Initializing database..."
-python -c "
-from backend.models.db import Base, engine, ensure_sqlite_schema
-try:
-    Base.metadata.create_all(bind=engine)
-    print('✅ Database tables created')
-    try:
-        ensure_sqlite_schema()
-        print('✅ SQLite schema verified')
-    except Exception as e:
-        print(f'⚠️  Schema verification skipped: {e}')
-except Exception as e:
-    print(f'❌ Database initialization failed: {e}')
-    exit(1)
-"
+# Run Alembic database migrations
+echo "� Running database migrations..."
+alembic upgrade head
 
-# Run migrations
-echo "🔄 Running database migrations..."
+if [ $? -eq 0 ]; then
+    echo "✅ Database migrations completed successfully"
+else
+    echo "❌ Database migration failed"
+    exit 1
+fi
+
+# Run any additional migrations (if needed)
+echo "🔄 Running additional migrations..."
 python scripts/migrate_add_admin.py || echo "⚠️  Migration warning (may already be applied)"
 
 echo "🎯 Starting uvicorn server..."

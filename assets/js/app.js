@@ -1,7 +1,7 @@
 // SecondBrain Neural Map Application with 3D Obsidian-like Visualization
 const state = {
   backend: localStorage.getItem('sb_backend') || (window.SECONDBRAIN_CONFIG ? window.SECONDBRAIN_CONFIG.BACKEND_URL : 'http://localhost:8000'),
-  token: localStorage.getItem('sb_token') || null,
+  // Token is now stored in httpOnly cookie - remove from localStorage
   cy: null,
   is3D: false,
   three: {
@@ -191,13 +191,13 @@ console.log('Page loaded, testing backend connection...');
 testBackendConnection();
 
 // Helper functions
-function setToken(token) {
-  state.token = token;
-  if (token) {
-    localStorage.setItem('sb_token', token);
+function setAuthStatus(isAuthenticated) {
+  // Clean up any legacy tokens
+  localStorage.removeItem('sb_token');
+  
+  if (isAuthenticated) {
     document.getElementById('authStatus').textContent = 'Authenticated';
   } else {
-    localStorage.removeItem('sb_token');
     document.getElementById('authStatus').textContent = 'Not authenticated';
   }
 }
@@ -211,14 +211,19 @@ async function apiFetch(path, opts = {}) {
     { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     opts.headers || {}
   );
-  if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+  // Token is now in httpOnly cookie - don't send Authorization header
+  // The cookie will be automatically included with credentials: 'include'
   
   const fullUrl = apiUrl(path);
   console.log('API Request:', opts.method || 'GET', fullUrl);
   console.log('Headers:', headers);
   
   try {
-    const res = await fetch(fullUrl, { ...opts, headers });
+    const res = await fetch(fullUrl, { 
+      ...opts, 
+      headers,
+      credentials: 'include'  // Always include cookies for authentication
+    });
     
     if (!res.ok) {
       let errorMessage = `${res.status} ${res.statusText}`;
@@ -320,9 +325,10 @@ document.getElementById('btnLogin').addEventListener('click', async (e) => {
     }
     
     const data = await res.json();
-    console.log('Login successful, received token');
+    console.log('Login successful, token stored in httpOnly cookie');
     
-    setToken(data.access_token);
+    // Token is now in httpOnly cookie, just update UI
+    setAuthStatus(true);
     notifications.showSuccess('Login successful! Loading your neural map...');
     
     // Animate successful login
@@ -352,8 +358,29 @@ document.getElementById('btnLogin').addEventListener('click', async (e) => {
   }
 });
 
-document.getElementById('btnLogout').addEventListener('click', () => {
-  setToken(null);
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  try {
+    // Call logout endpoint to clear cookie
+    await apiFetch('/auth/logout', { method: 'POST' });
+    setAuthStatus(false);
+    notifications.showSuccess('Logged out successfully');
+    
+    // Clear the map
+    state.mapData = { nodes: [], edges: [] };
+    if (state.cy) state.cy.elements().remove();
+    
+    // If in 3D mode, switch back to 2D
+    if (state.is3D) {
+      const toggle3D = document.getElementById('toggle3D');
+      if (toggle3D) {
+        toggle3D.checked = false;
+        toggle3DMode();
+      }
+    }
+  } catch (e) {
+    console.error('Logout error:', e);
+    notifications.showError('Logout failed: ' + e.message);
+  }
 });
 
 document.getElementById('saveBackendUrl').addEventListener('click', () => {

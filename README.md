@@ -5,20 +5,22 @@ A powerful neural knowledge mapping application with 3D visualization, secure au
 ## Features
 
 - **3D Neural Map Visualization**: Immersive 3D network visualization with different node types (spheres, octahedrons, dodecahedrons, icosahedrons)
-- **Secure Authentication**: JWT-based authentication with rate limiting and input validation
-- **Apple Notes Import**: Bulk import from Apple Notes export files with intelligent parsing
+- **Secure Authentication**: JWT-based authentication with httpOnly cookies, rate limiting, and input validation
+- **Vector Semantic Search**: ChromaDB-powered vector search for finding related notes
 - **Real-time Search**: Vector-based semantic search across your knowledge base
 - **Performance Optimized**: Handles large datasets with efficient rendering and memory management
-- **Security Hardened**: CORS protection, rate limiting, input validation, and security headers
+- **Security Hardened**: CORS protection, rate limiting, input validation, security headers, and cookie-based auth
+- **Database Migrations**: Alembic-managed schema evolution for safe production deployments
 
 ## Quick Start
 
-### Automated Setup
+### Automated Setup (Recommended)
 
 1. **Clone and Setup**:
    ```bash
    git clone <repository-url>
    cd secondbrain
+   chmod +x scripts/*.sh
    ./scripts/setup.sh
    ```
 
@@ -27,17 +29,21 @@ A powerful neural knowledge mapping application with 3D visualization, secure au
    cp .env.example .env
    # Edit .env - IMPORTANT: Change SECRET_KEY for production!
    # Generate secure key: python -c "import secrets; print(secrets.token_urlsafe(32))"
+   # For production: Set ENVIRONMENT=production and ENABLE_HTTPS=true
    ```
 
 3. **Start Application**:
    ```bash
    ./scripts/start.sh
-   # This will initialize the database and start the server
+   # This will:
+   # - Activate virtual environment
+   # - Run Alembic database migrations
+   # - Start the FastAPI server
    ```
 
 4. **Access Application**:
    - Backend API: http://localhost:8000
-   - Frontend: Open `frontend/index.html` in browser
+   - Frontend: Open `index.html` in your browser
    - API Documentation: http://localhost:8000/docs (development only)
 
 ### Manual Setup
@@ -63,10 +69,8 @@ A powerful neural knowledge mapping application with 3D visualization, secure au
 
 4. **Initialize Database**:
    ```bash
-   # Run database migrations (for now, this creates tables)
-   python -c "from backend.models.db import Base, engine, ensure_sqlite_schema; Base.metadata.create_all(bind=engine); ensure_sqlite_schema()"
-   
-   # TODO: When Alembic is set up, use: alembic upgrade head
+   # Run Alembic migrations to create tables
+   alembic upgrade head
    ```
 
 5. **Start Backend**:
@@ -74,6 +78,30 @@ A powerful neural knowledge mapping application with 3D visualization, secure au
    export PYTHONPATH=$(pwd)
    python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
    ```
+
+### Docker Setup (Alternative)
+
+Use Docker Compose for a complete environment with PostgreSQL:
+
+```bash
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Start all services (backend, postgres, frontend)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
+
+# Stop services
+docker-compose down
+```
+
+Services:
+- Backend API: http://localhost:8000
+- Frontend: http://localhost:3000
+- PostgreSQL: localhost:5432
 
 ## Configuration
 
@@ -83,20 +111,41 @@ All configuration is managed through environment variables (see `.env.example`):
 
 **Required for Production:**
 - `SECRET_KEY`: JWT signing key (min 32 chars, use `secrets.token_urlsafe(32)`)
-- `ENVIRONMENT`: Set to `production` for production deployments
-- `ENABLE_HTTPS`: Set to `true` when using HTTPS (enables HSTS)
+- `ENVIRONMENT`: Set to `production` for production deployments (enforces SECRET_KEY requirement)
+- `ENABLE_HTTPS`: Set to `true` when using HTTPS (enables HSTS headers)
 - `DATABASE_URL`: PostgreSQL connection string recommended for production
 
+**Authentication:**
+- JWTs are stored in secure, httpOnly cookies (not localStorage)
+- Cookies are marked as `secure` in production with HTTPS enabled
+- `SameSite=Lax` for CSRF protection
+- Token expiration configurable via `ACCESS_TOKEN_EXPIRE_MINUTES` (default: 30)
+
 **Optional:**
-- `OPENAI_API_KEY`: For enhanced embeddings (falls back to local hashing)
+- `OPENAI_API_KEY`: For OpenAI embeddings (recommended for better semantic search)
 - `CORS_ORIGINS`: Comma-separated list of allowed origins
 - `LOG_LEVEL`: Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- `CHROMA_PATH`: Vector database storage path (default: ./data/vector_db)
 
-### Legacy Environment Variables
+### Database Migrations
 
-For backward compatibility, the following are still supported:
-- `SECONDBRAIN_DB_URL`: Overrides `DATABASE_URL`
-- `SECONDBRAIN_CHROMA_PATH`: Overrides `CHROMA_PATH`
+This project uses Alembic for database schema management:
+
+```bash
+# Run migrations (required before starting the app)
+alembic upgrade head
+
+# Create a new migration after model changes
+alembic revision --autogenerate -m "Description of changes"
+
+# Rollback one migration
+alembic downgrade -1
+
+# View migration history
+alembic history
+```
+
+**Important:** Never use `Base.metadata.create_all()` in production. Always use Alembic migrations.
 
 ## Usage
 
@@ -125,11 +174,13 @@ For backward compatibility, the following are still supported:
 
 ## Security Features
 
-- **Rate Limiting**: Login (10/min), Signup (5/min)
-- **Input Validation**: Username/password requirements
-- **CORS Protection**: Restricted origins
-- **Security Headers**: XSS, clickjacking, content-type protection
-- **JWT Authentication**: Secure token-based sessions
+- **Cookie-Based Authentication**: JWTs stored in secure, httpOnly cookies (immune to XSS attacks)
+- **Rate Limiting**: Login (10/min), Signup (5/min), configurable per endpoint
+- **Input Validation**: Pydantic schemas with password complexity requirements
+- **CORS Protection**: Configurable allowed origins
+- **Security Headers**: XSS, clickjacking, content-type protection, conditional HSTS
+- **Password Security**: Bcrypt hashing with salt
+- **Environment-Based Security**: Enforces strong SECRET_KEY in non-development environments
 
 ## Performance
 
@@ -140,13 +191,24 @@ For backward compatibility, the following are still supported:
 
 ## API Endpoints
 
-- `POST /auth/signup` - Create account
-- `POST /auth/token` - Login
-- `GET /auth/me` - Get current user
+### Authentication
+- `POST /auth/signup` - Create new user account
+- `POST /auth/token` - Login (sets httpOnly cookie)
+- `POST /auth/logout` - Logout (clears cookie)
+- `GET /auth/me` - Get current user info
+
+### Notes
 - `POST /notes/` - Create note
-- `GET /notes/` - List notes
-- `GET /map/` - Get neural map data
-- `POST /search` - Search notes
+- `GET /notes/` - List user's notes
+- `GET /notes/{id}` - Get specific note
+- `PUT /notes/{id}` - Update note
+- `DELETE /notes/{id}` - Delete note
+
+### Map & Search
+- `GET /map/` - Get neural map data with similarity edges
+- `POST /search/` - Semantic search across notes
+
+All authenticated endpoints require a valid session cookie (automatically handled by the browser).
 
 ## Development
 
@@ -157,44 +219,57 @@ secondbrain/
 ├── README.md                     # Project documentation
 ├── requirements.txt              # Python dependencies
 ├── .env.example                  # Environment template
+├── docker-compose.yml            # Docker orchestration
+├── nginx.conf                    # Nginx configuration for Docker
+├── alembic.ini                   # Alembic configuration
+├── alembic/                      # Database migrations
+│   ├── env.py                    # Migration environment
+│   ├── script.py.mako            # Migration template
+│   └── versions/                 # Migration scripts
+│       └── 001_initial_schema.py # Initial schema
+├── config/
+│   └── local.env                 # Local development settings
 ├── backend/                      # Python FastAPI backend
 │   ├── main.py                   # Application entry point
 │   ├── config/
-│   │   └── settings.py           # Configuration settings
+│   │   └── config.py             # Pydantic settings with validation
 │   ├── core/
 │   │   ├── security.py           # JWT and password handling
-│   │   └── embeddings.py         # Text embeddings
+│   │   ├── embeddings.py         # Text embeddings
+│   │   └── logging.py            # Structured logging
 │   ├── models/
 │   │   ├── db.py                 # Database configuration
 │   │   ├── user.py               # User model
 │   │   └── note.py               # Note model
 │   ├── routes/
-│   │   ├── auth.py               # Authentication endpoints
+│   │   ├── auth.py               # Authentication endpoints (cookie-based)
 │   │   ├── notes.py              # Note CRUD operations
 │   │   ├── search.py             # Search functionality
 │   │   └── map.py                # Neural map data
 │   └── services/
-│       └── vector_store.py       # Vector database operations
-├── frontend/                     # Web frontend
-│   ├── index.html                # Main application
-│   └── assets/
-│       ├── css/
-│       │   └── styles.css        # Application styling
-│       ├── js/
-│       │   ├── app.js            # Core application logic
-│       │   ├── auth.js           # Authentication handling
-│       │   └── config.js         # Frontend configuration
-│       └── libs/
-│           └── cytoscape.min.js  # Graph visualization library
-├── data/                         # Data storage
+│       └── vector_store.py       # Thread-safe ChromaDB operations
+├── assets/                       # Frontend assets
+│   ├── css/
+│   │   └── styles.css            # Application styling
+│   ├── js/
+│   │   ├── app.js                # Core app (cookie-based auth)
+│   │   ├── auth.js               # Authentication (no localStorage)
+│   │   └── config.js             # Frontend configuration
+│   └── libs/
+│       └── cytoscape.min.js      # Graph visualization library
+├── data/                         # Data storage (gitignored)
 │   ├── database/                 # SQLite database
 │   └── vector_db/                # ChromaDB vector store
 ├── scripts/                      # Utility scripts
 │   ├── setup.sh                  # Initial setup script
-│   ├── start.sh                  # Application startup
+│   ├── start.sh                  # Application startup with migrations
 │   └── demo/                     # Demo data scripts
 ├── tests/                        # Test files
+│   └── test_app.py               # API tests
 └── docs/                         # Additional documentation
+    ├── api.md                    # API documentation
+    ├── development.md            # Development guide
+    └── PROFESSIONAL_GUIDELINES.md # Professional practices
 ```
 
 ## Troubleshooting

@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=devi        <p class="muted">💡 3D Controls: Click 3D area first! WASD/Arrows to move, QE/Space/Shift for up/down, Right-click drag to pan, Shift+drag nodes to move them, R for auto-rotate, C to reset camera</p>
+      </section>
+
+      <section class="card">
+        <h3>Create Note</h3>nitial-scale=1,viewport-fit=cover" />
   <title>SecondBrain Map</title>
   <link rel="stylesheet" href="./assets/css/styles.css" />
   <!-- Debug logging -->
@@ -13,10 +17,14 @@
   </script>
   <!-- Configuration -->
   <script src="./assets/js/config.js"></script>
-  <!-- Cytoscape CDN -->
-  <script defer src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
-  <!-- Three.js for 3D visualization - using a stable version -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Cytoscape - Local Copy -->
+  <script defer src="./assets/libs/cytoscape.min.js"></script>
+  <!-- Three.js for 3D visualization - CDN (consider hosting locally for production) -->
+  <!-- TODO: Download and host locally for better security and offline support -->
+  <!-- Integrity hash: sha384-WAvr9qfHkK8kECY5Ack5E3vqqwKD+BUaGwXDYgTx1gkL2BxcGRbZDYp5IkKFm8Fm -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" 
+          integrity="sha384-WAvr9qfHkK8kECY5Ack5E3vqqwKD+BUaGwXDYgTx1gkL2BxcGRbZDYp5IkKFm8Fm" 
+          crossorigin="anonymous"></script>
   <script>
     // Create OrbitControls manually since CDN version might not work
     window.addEventListener('DOMContentLoaded', function() {
@@ -38,7 +46,7 @@
   <header class="sb-header">
     <div class="brand">🧠 SecondBrain Neural Map</div>
     <div class="demo-info" style="color: var(--accent); font-size: 12px; opacity: 0.8;">
-      octopus : your AI second brain 
+      Semantic search · Knowledge mapping · Local-first
     </div>
     <div class="env">
       <label>Backend URL</label>
@@ -64,11 +72,22 @@
       </section>
 
       <section class="card">
-        <h3>Map Controls</h3>
+        <h3>🔍 Semantic Search</h3>
+        <p class="muted">Find notes by meaning, not just keywords. Powered by vector embeddings.</p>
+        <div class="row">
+          <input id="searchQuery" type="text" placeholder="Search by topic, concept, or question..." />
+          <button id="btnSearch">Search</button>
+        </div>
+        <div id="searchResults" class="results-container"></div>
+      </section>
+
+      <section class="card">
+        <h3>🗺️ Knowledge Map (Exploratory)</h3>
+        <p class="muted">Visualize connections between notes. Enable 3D mode for immersive exploration.</p>
         <div class="row">
           <label class="checkbox">
             <input id="toggle3D" type="checkbox" />
-            3D Neural Map
+            Enable 3D Neural Map
           </label>
         </div>
         <label>Min similarity: <span id="simVal">0.45</span></label>
@@ -80,7 +99,7 @@
         <div class="row">
           <label class="checkbox">
             <input id="includeIsolates" type="checkbox" checked />
-            Include isolates
+            Include isolated notes
           </label>
         </div>
         <div class="row">
@@ -97,33 +116,7 @@
       </section>
 
       <section class="card">
-        <h3>Search Notes</h3>
-        <div class="row">
-          <input id="searchQuery" type="text" placeholder="e.g., business idea" />
-          <button id="btnSearch">Search</button>
-        </div>
-        <div id="searchResults" class="list"></div>
-      </section>
-
-      <section class="card">
-        <h3>Bulk Import Notes</h3>
-        <div class="row">
-          <label for="bulkImport" class="file-label">
-            📱 Import from Apple Notes
-            <input id="bulkImport" type="file" accept=".txt,.md,.rtf,.csv,.json" multiple style="display:none;" />
-          </label>
-        </div>
-        <div class="row">
-          <textarea id="bulkText" rows="8" placeholder="Or paste multiple notes here... Separate notes with '---' on its own line"></textarea>
-        </div>
-        <div class="row">
-          <button id="btnBulkImport">Import All Notes</button>
-        </div>
-        <p class="muted">Supported: Apple Notes export (.txt), plain text, markdown. Each note should be separated by '---'</p>
-      </section>
-
-      <section class="card">
-        <h3>Create Single Note</h3>
+        <h3>Create Note</h3>
         <div class="row">
           <input id="noteTitle" type="text" placeholder="Title" />
         </div>

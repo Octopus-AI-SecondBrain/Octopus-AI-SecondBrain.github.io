@@ -51,6 +51,7 @@ async function apiCall(endpoint, options = {}) {
       'Content-Type': options.isFormData ? 'application/x-www-form-urlencoded' : 'application/json',
       'Accept': 'application/json'
     },
+    credentials: 'include',  // Always include cookies
     ...options
   };
   
@@ -95,11 +96,14 @@ els.loginForm.addEventListener('submit', async (e) => {
     const response = await apiCall('/auth/token', {
       method: 'POST',
       body: formData,
-      isFormData: true
+      isFormData: true,
+      credentials: 'include'  // Important: Include cookies in request
     });
     
-    // Store token and redirect
-    localStorage.setItem('sb_token', response.access_token);
+    // Token is now stored in httpOnly cookie - don't store in localStorage
+    // Remove any legacy token from localStorage
+    localStorage.removeItem('sb_token');
+    
     showToast('Login successful! Redirecting...', 'success');
     
     setTimeout(() => {
@@ -196,21 +200,17 @@ function hideLoading(button, originalText) {
 
 // Check if already logged in
 window.addEventListener('load', () => {
-  const token = localStorage.getItem('sb_token');
-  if (token) {
-    // Verify token is still valid
-    apiCall('/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    }).then(() => {
-      // Token is valid, redirect to main app
-      window.location.href = './index.html';
-    }).catch(() => {
-      // Token invalid, clear it
-      localStorage.removeItem('sb_token');
-    });
-  }
+  // Check if authenticated via cookie by calling /auth/me
+  apiCall('/auth/me', {
+    credentials: 'include'
+  }).then(() => {
+    // User is authenticated, redirect to main app
+    window.location.href = './index.html';
+  }).catch(() => {
+    // Not authenticated, stay on login page
+    // Also clear any legacy tokens
+    localStorage.removeItem('sb_token');
+  });
 });
 
 // Add some keyboard shortcuts
