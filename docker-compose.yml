@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: secondbrain-postgres
+    environment:
+      POSTGRES_DB: secondbrain
+      POSTGRES_USER: secondbrain
+      POSTGRES_PASSWORD: secondbrain_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secondbrain"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - secondbrain-network
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: secondbrain-backend
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql://secondbrain:secondbrain_password@postgres:5432/secondbrain
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production-min-32-chars}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - CHROMA_PATH=/app/data/vector_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080
+      - ENABLE_HTTPS=false
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+      - vector_data:/app/data/vector_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        echo 'Running migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting server...' &&
+        uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - secondbrain-network
+
+  # Frontend Web Server (optional - for serving static files)
+  frontend:
+    image: nginx:alpine
+    container_name: secondbrain-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./auth.html:/usr/share/nginx/html/auth.html:ro
+      - ./assets:/usr/share/nginx/html/assets:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - secondbrain-network
+
+volumes:
+  postgres_data:
+    driver: local
+  vector_data:
+    driver: local
+
+networks:
+  secondbrain-network:
+    driver: bridge
