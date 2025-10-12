@@ -59,6 +59,13 @@ vector_db/
 logs/
 frontend.log
 
+# Test/Debug files
+auth-test.html
+clear-test.html
+debug.html
+manual-test.html
+*-test.html
+
 # Node.js
 node_modules/
 npm-debug.log*

@@ -14,7 +14,8 @@ const CONFIG = {
   // Feature flags
   FEATURES: {
     DEBUG_LOGGING: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
-    CONNECTION_TESTING: true,
+    CONNECTION_TESTING: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+    SHOW_BACKEND_CONFIG: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
     ENHANCED_3D: true
   }
 };
