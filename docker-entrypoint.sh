@@ -20,5 +20,9 @@ except Exception as e:
     exit(1)
 "
 
+# Run migrations
+echo "🔄 Running database migrations..."
+python scripts/migrate_add_admin.py || echo "⚠️  Migration warning (may already be applied)"
+
 echo "🎯 Starting uvicorn server..."
 exec uvicorn backend.main:app --host 0.0.0.0 --port 8000
