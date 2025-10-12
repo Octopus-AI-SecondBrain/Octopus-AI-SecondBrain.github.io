@@ -34,11 +34,12 @@ def clean_state():
     db.Base.metadata.drop_all(bind=db.engine)
     db.Base.metadata.create_all(bind=db.engine)
     
-    # Ensure SQLite schema is up to date
-    try:
-        db.ensure_sqlite_schema()
-    except Exception:
-        pass  # Not critical for tests
+    # For SQLite, ensure schema is up to date (no-op for PostgreSQL)
+    if db.engine.url.drivername.startswith('sqlite'):
+        try:
+            db.ensure_sqlite_schema()
+        except Exception:
+            pass  # Not critical for tests
 
     # Reset vector store
     if vector_store._client is not None:

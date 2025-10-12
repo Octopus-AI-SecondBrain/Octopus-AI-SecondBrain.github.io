@@ -8,9 +8,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install system dependencies for building Python packages
+# Including PostgreSQL client libraries
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
+    libpq-dev \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
