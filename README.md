@@ -1,6 +1,66 @@
-# SecondBrain - Local Neural Knowledge Map
+# 🐙 Octopus – Your AI Second Brain
 
-A powerful neural knowledge mapping application with 3D visualization, secure authentication, and local hosting for personal use.
+A modern, production-ready neural knowledge mapping application with 3D visualization, semantic search, and beautiful UI.
+
+> **Note**: This project has been completely refactored! See [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) and [GETTING_STARTED.md](GETTING_STARTED.md) for the new architecture.
+
+## 🚀 Quick Start
+
+⚠️ **IMPORTANT**: You must run database migrations before starting the application!
+
+```bash
+# Backend Setup (FastAPI)
+cd /path/to/secondbrain
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# REQUIRED: Run database migrations first
+alembic upgrade head
+
+# Start backend on port 8000
+uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+
+# Frontend Setup (React + Vite + Tailwind) - in another terminal
+cd frontend
+npm install
+echo "VITE_API_URL=http://localhost:8000" > .env
+
+# Start frontend (defaults to port 5173)
+npm run dev
+```
+
+**Visit**: The frontend will show the URL (typically http://localhost:5173)
+
+## 🚀 Production Deployment
+
+This application is ready for production deployment with:
+
+- **Frontend**: GitHub Pages (automatic deployment from main branch)
+- **Backend**: Render.com (managed PostgreSQL, auto-deploy, free tier available)
+
+**📖 [Complete Deployment Guide](DEPLOYMENT.md)** - Step-by-step instructions for deploying to production.
+
+**Quick Deploy Summary**:
+1. **Frontend**: Push to GitHub → automatic GitHub Pages deployment
+2. **Backend**: Connect GitHub repo to Render.com → automatic deployments
+3. **Database**: Use Render's managed PostgreSQL
+4. **Environment**: Set required environment variables (SECRET_KEY, DATABASE_URL, OPENAI_API_KEY)
+
+**Live Demo**: `https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io/` (after deployment)
+
+**CORS Configuration**: The backend is pre-configured to accept requests from common development ports:
+- `3000`, `8080` (Create React App, various dev servers)
+- `5173`, `4173` (Vite default ports)
+- Both `localhost` and `127.0.0.1` variants
+- Production GitHub Pages origin
+
+To use a custom port, set the `CORS_ORIGINS` environment variable:
+```bash
+export CORS_ORIGINS="http://localhost:3001,http://127.0.0.1:3001"
+# Or in .env file:
+# CORS_ORIGINS=http://localhost:3001,http://127.0.0.1:3001
+```
 
 ## Features
 
@@ -69,7 +129,7 @@ A powerful neural knowledge mapping application with 3D visualization, secure au
 
 4. **Initialize Database**:
    ```bash
-   # Run Alembic migrations to create tables
+   # CRITICAL: Run Alembic migrations to create tables - required before starting the app!
    alembic upgrade head
    ```
 
@@ -123,16 +183,18 @@ All configuration is managed through environment variables (see `.env.example`):
 
 **Optional:**
 - `OPENAI_API_KEY`: For OpenAI embeddings (recommended for better semantic search)
-- `CORS_ORIGINS`: Comma-separated list of allowed origins
+- `CORS_ORIGINS`: Comma-separated list of allowed origins (defaults include common dev ports: 3000, 5173, 4173, 8080)
 - `LOG_LEVEL`: Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 - `CHROMA_PATH`: Vector database storage path (default: ./data/vector_db)
 
 ### Database Migrations
 
+⚠️ **CRITICAL**: Always run migrations before starting the application!
+
 This project uses Alembic for database schema management:
 
 ```bash
-# Run migrations (required before starting the app)
+# REQUIRED: Run migrations before starting the app
 alembic upgrade head
 
 # Create a new migration after model changes
@@ -145,7 +207,11 @@ alembic downgrade -1
 alembic history
 ```
 
-**Important:** Never use `Base.metadata.create_all()` in production. Always use Alembic migrations.
+**Important Notes:**
+- The application will fail to start properly without running migrations first
+- Never use `Base.metadata.create_all()` in production. Always use Alembic migrations
+- The startup health check will detect missing migrations and warn about schema issues
+- Use `scripts/start.sh` which automatically runs migrations before starting the server
 
 ## Usage
 
@@ -273,6 +339,18 @@ secondbrain/
 ```
 
 ## Troubleshooting
+
+### CORS / Network Errors
+- **"Cannot reach server"** or **"Network Error"**: Usually a CORS issue
+- Check that the backend is running on port 8000: `curl http://localhost:8000/health`
+- Verify your frontend dev server port is in the CORS allowlist (3000, 5173, 4173, 8080 by default)
+- For custom ports, set `CORS_ORIGINS`: `export CORS_ORIGINS="http://localhost:YOURPORT"`
+- Restart the backend after changing CORS settings
+
+### Database / Migration Errors
+- **"Database not properly initialized"**: Run `alembic upgrade head` before starting the backend
+- **503 errors on signup/login**: Usually means migrations haven't been run
+- Check that the `data/database/` directory exists and is writable
 
 ### 3D Visualization Not Loading
 - Check browser console for Three.js errors

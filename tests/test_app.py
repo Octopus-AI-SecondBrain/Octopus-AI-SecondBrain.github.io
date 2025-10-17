@@ -152,3 +152,81 @@ def test_note_workflow_search_and_map(client: TestClient):
     remaining_notes = final_list.json()
     assert len(remaining_notes) == 1
     assert remaining_notes[0]["id"] == note_one["id"]
+
+
+def test_signup_with_missing_tables():
+    """Test signup behavior when database tables are missing."""
+    # Create a test client with a fresh database that has no tables
+    temp_db_path = TEST_ROOT / "empty_test.db"
+    if temp_db_path.exists():
+        temp_db_path.unlink()
+    
+    # Temporarily override the database URL for this test
+    original_db_url = os.environ.get("SECONDBRAIN_DB_URL")
+    os.environ["SECONDBRAIN_DB_URL"] = f"sqlite:///{temp_db_path}"
+    
+    try:
+        # Import fresh app with empty database
+        from backend.models.db import engine
+        from sqlalchemy import create_engine
+        
+        # Create a new engine with empty database
+        test_engine = create_engine(f"sqlite:///{temp_db_path}")
+        
+        # Don't create tables - this simulates the missing migration scenario
+        
+        with TestClient(app, base_url="http://localhost") as test_client:
+            signup_response = test_client.post(
+                "/auth/signup",
+                json={"username": "testuser", "password": "TestPass123"},
+            )
+            
+            # Should return 503 with helpful message about running migrations
+            assert signup_response.status_code == 503
+            response_data = signup_response.json()
+            assert "alembic upgrade head" in response_data["detail"]
+            
+    finally:
+        # Restore original environment
+        if original_db_url:
+            os.environ["SECONDBRAIN_DB_URL"] = original_db_url
+        else:
+            os.environ.pop("SECONDBRAIN_DB_URL", None)
+            
+        # Clean up test database
+        if temp_db_path.exists():
+            temp_db_path.unlink()
+
+
+def test_health_check_with_missing_schema():
+    """Test health check behavior when database schema is missing."""
+    # Create a test client with a fresh database that has no tables
+    temp_db_path = TEST_ROOT / "empty_health_test.db"
+    if temp_db_path.exists():
+        temp_db_path.unlink()
+    
+    # Temporarily override the database URL for this test
+    original_db_url = os.environ.get("SECONDBRAIN_DB_URL")
+    os.environ["SECONDBRAIN_DB_URL"] = f"sqlite:///{temp_db_path}"
+    
+    try:
+        with TestClient(app, base_url="http://localhost") as test_client:
+            health_response = test_client.get("/health")
+            
+            # Should still return 200 but with degraded status
+            assert health_response.status_code == 200
+            response_data = health_response.json()
+            assert response_data["status"] == "degraded"
+            assert response_data["database"] == "schema_missing"
+            assert "alembic upgrade head" in response_data["message"]
+            
+    finally:
+        # Restore original environment
+        if original_db_url:
+            os.environ["SECONDBRAIN_DB_URL"] = original_db_url
+        else:
+            os.environ.pop("SECONDBRAIN_DB_URL", None)
+            
+        # Clean up test database
+        if temp_db_path.exists():
+            temp_db_path.unlink()

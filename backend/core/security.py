@@ -41,8 +41,13 @@ else:
             "This is acceptable for local dev but DO NOT use in production."
         )
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing context - configure bcrypt to avoid version detection issues
+pwd_context = CryptContext(
+    schemes=["bcrypt"], 
+    deprecated="auto",
+    bcrypt__default_rounds=12,
+    bcrypt__default_ident="2b"
+)
 
 
 def hash_password(password: str) -> str:
@@ -56,9 +61,28 @@ def hash_password(password: str) -> str:
         The hashed password
     """
     try:
+        # Ensure password is properly encoded and within bcrypt's 72 byte limit
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            logger.warning(f"Password truncated from {len(password_bytes)} to 72 bytes for bcrypt compatibility")
+            password_bytes = password_bytes[:72]
+            password = password_bytes.decode('utf-8')
+        
         hashed = pwd_context.hash(password)
         logger.debug("Password hashed successfully")
         return hashed
+    except ValueError as ve:
+        if "password cannot be longer than 72 bytes" in str(ve):
+            # Fallback: use direct bcrypt if passlib has issues
+            logger.warning("Falling back to direct bcrypt due to passlib issue")
+            import bcrypt
+            password_bytes = password.encode('utf-8')[:72]
+            salt = bcrypt.gensalt()
+            hashed = bcrypt.hashpw(password_bytes, salt)
+            return hashed.decode('utf-8')
+        else:
+            logger.error(f"ValueError hashing password: {ve}", exc_info=True)
+            raise
     except Exception as exc:
         logger.error(f"Error hashing password: {exc}", exc_info=True)
         raise
@@ -79,6 +103,23 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         result = pwd_context.verify(plain_password, hashed_password)
         logger.debug(f"Password verification: {'successful' if result else 'failed'}")
         return result
+    except ValueError as ve:
+        if "password cannot be longer than 72 bytes" in str(ve):
+            # Fallback: use direct bcrypt if passlib has issues
+            logger.warning("Falling back to direct bcrypt for verification due to passlib issue")
+            import bcrypt
+            password_bytes = plain_password.encode('utf-8')[:72]
+            hash_bytes = hashed_password.encode('utf-8')
+            try:
+                result = bcrypt.checkpw(password_bytes, hash_bytes)
+                logger.debug(f"Password verification (direct bcrypt): {'successful' if result else 'failed'}")
+                return result
+            except Exception as e:
+                logger.error(f"Direct bcrypt verification failed: {e}")
+                return False
+        else:
+            logger.error(f"ValueError verifying password: {ve}", exc_info=True)
+            return False
     except Exception as exc:
         logger.error(f"Error verifying password: {exc}", exc_info=True)
         return False

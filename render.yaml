@@ -1,0 +1,11 @@
+# Render deployment configuration
+# This file configures automatic deployment to Render.com
+
+# Build Command (for web service)
+# pip install -r requirements.txt
+
+# Start Command (for web service)  
+# uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+
+# Pre-deploy Command (runs migrations)
+# alembic upgrade head

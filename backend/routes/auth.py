@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError
 from jose import JWTError, jwt
 from typing import Annotated, Optional
 
@@ -158,6 +159,21 @@ def signup(
         
     except HTTPException:
         raise
+    except OperationalError as exc:
+        # Specifically handle database operational errors (missing tables, etc.)
+        error_message = str(exc).lower()
+        if "no such table" in error_message or "table" in error_message:
+            logger.error(f"Database schema missing - likely need to run migrations: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database not properly initialized. Please run 'alembic upgrade head' to create the required tables."
+            )
+        else:
+            logger.error(f"Database operational error during signup: {exc}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service temporarily unavailable"
+            )
     except Exception as exc:
         logger.error(f"Error creating user: {exc}", exc_info=True)
         db.rollback()
@@ -236,6 +252,21 @@ def login_for_access_token(
         
     except HTTPException:
         raise
+    except OperationalError as exc:
+        # Specifically handle database operational errors (missing tables, etc.)
+        error_message = str(exc).lower()
+        if "no such table" in error_message or "table" in error_message:
+            logger.error(f"Database schema missing during login - likely need to run migrations: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database not properly initialized. Please run 'alembic upgrade head' to create the required tables."
+            )
+        else:
+            logger.error(f"Database operational error during login: {exc}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service temporarily unavailable"
+            )
     except Exception as exc:
         logger.error(f"Error during login: {exc}", exc_info=True)
         raise HTTPException(

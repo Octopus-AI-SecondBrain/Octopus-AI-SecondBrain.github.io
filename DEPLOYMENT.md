@@ -1,284 +1,235 @@
-# Deployment Guide - GitHub Pages + Render
+# 🚀 Deployment Guide
 
-This guide walks you through deploying SecondBrain with the frontend on GitHub Pages and the backend on Render.
+This guide covers deploying the SecondBrain application with:
+- **Frontend**: GitHub Pages (free, automatic deployment)
+- **Backend**: Render.com (free tier available, managed PostgreSQL)
 
-## Quick Deployment Steps
+## 📋 Prerequisites
 
-### 1. Push to GitHub
+1. **GitHub Repository**: Push your code to GitHub
+2. **Render Account**: Sign up at [render.com](https://render.com)
+3. **OpenAI API Key**: Required for embedding functionality
 
-```bash
-# Initialize git if not already done
-git init
-git add .
-git commit -m "Production-ready deployment"
+## 🌐 Frontend Deployment (GitHub Pages)
 
-# Create GitHub repo at https://github.com/new
-# Then connect and push:
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
-git push -u origin main
-```
+### Automatic Deployment Setup
 
-### 2. Deploy Backend to Render.com
-
-#### Option A: Free Tier (Good for testing)
-1. Go to [render.com](https://render.com) and sign up
-2. Click **New** → **Web Service**
-3. Connect your GitHub repository
-4. Configure:
-   - **Name**: `secondbrain-api` (or your choice)
-   - **Environment**: `Docker`
-   - **Branch**: `main`
-   - **Plan**: Free (or paid for better performance)
-
-5. Add Environment Variables:
-   ```
-   ENVIRONMENT=production
-   SECRET_KEY=<generate-with-command-below>
-   DATABASE_URL=<will-be-added-automatically>
-   ENABLE_HTTPS=true
-   CORS_ORIGINS=https://YOUR-USERNAME.github.io
-   LOG_LEVEL=INFO
-   ```
-
-   Generate SECRET_KEY:
+1. **Enable GitHub Pages**:
    ```bash
-   python -c "import secrets; print(secrets.token_urlsafe(32))"
+   # Go to your GitHub repo → Settings → Pages
+   # Source: Deploy from a branch
+   # Branch: gh-pages
+   # Folder: / (root)
    ```
 
-6. Add PostgreSQL Database (Recommended for production):
-   - In Render dashboard: **New** → **PostgreSQL**
-   - Copy the **Internal Database URL**
-   - Set as `DATABASE_URL` environment variable
+2. **Set Repository Secret**:
+   ```bash
+   # Go to GitHub repo → Settings → Secrets and variables → Actions
+   # Add new repository secret:
+   Name: VITE_API_URL
+   Value: https://your-backend-name.onrender.com
+   ```
 
-7. For persistent ChromaDB storage:
-   - Add a **Disk** in Render
-   - Mount path: `/app/data/vector_db`
-   - Set `SECONDBRAIN_CHROMA_PATH=/app/data/vector_db`
+3. **Deploy**:
+   - Push to `main` branch triggers automatic deployment
+   - Visit: `https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io/`
 
-8. Click **Create Web Service**
-9. Wait for deployment (first deploy takes ~5 minutes)
-10. Note your backend URL: `https://secondbrain-api.onrender.com`
-
-#### Option B: Railway.app (Alternative)
-Similar to Render, supports Docker, provides PostgreSQL, and has a free tier.
-
-### 3. Update Frontend Configuration
-
-Edit `frontend/assets/js/config.js`:
-
-```javascript
-BACKEND_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8000'
-  : 'https://secondbrain-api.onrender.com', // YOUR ACTUAL BACKEND URL
-```
-
-Commit and push:
-```bash
-git add frontend/assets/js/config.js
-git commit -m "Update backend URL for production"
-git push
-```
-
-### 4. Enable GitHub Pages
-
-1. Go to your GitHub repo → **Settings** → **Pages**
-2. Under **Build and deployment**:
-   - Source: **GitHub Actions**
-3. The workflow (`.github/workflows/deploy-pages.yml`) will automatically deploy
-4. Wait 2-3 minutes, then visit: `https://YOUR-USERNAME.github.io/YOUR-REPO`
-
-If your repo name is `YOUR-USERNAME.github.io`:
-- Your site will be at: `https://YOUR-USERNAME.github.io`
-- Update workflow path if needed
-
-### 5. Update Backend CORS
-
-In Render (or your host), update the `CORS_ORIGINS` environment variable to include your GitHub Pages URL:
-
-```
-CORS_ORIGINS=https://YOUR-USERNAME.github.io,https://YOUR-USERNAME.github.io/YOUR-REPO
-```
-
-Restart the backend service after updating.
-
-### 6. Test Your Deployment
-
-1. Visit your GitHub Pages URL
-2. Create an account (use a strong password!)
-3. Create notes and test the 3D visualization
-4. Check browser DevTools → Network to ensure API calls work
-
-## Troubleshooting
-
-### CORS Errors
-**Problem**: `Access-Control-Allow-Origin` errors in browser console
-
-**Solution**:
-- Verify `CORS_ORIGINS` in backend includes exact GitHub Pages URL
-- No trailing slashes in URLs
-- Restart backend after changing env vars
-
-### Backend Not Responding
-**Problem**: Frontend can't connect to backend
-
-**Solution**:
-- Check backend URL in `config.js` matches your Render URL
-- Verify Render service is running (check logs)
-- Test backend directly: `https://your-backend.onrender.com/health`
-
-### Authentication Issues
-**Problem**: Can't sign up or login
-
-**Solution**:
-- Check `SECRET_KEY` is set in backend environment
-- SECRET_KEY must be 32+ characters
-- Check backend logs in Render dashboard
-
-### Database Connection Issues
-**Problem**: Backend crashes or can't store data
-
-**Solution**:
-- For SQLite: Ensure `/app/data` directory is writable
-- For PostgreSQL: Verify `DATABASE_URL` is set correctly
-- Check Render logs for database connection errors
-
-### GitHub Pages 404
-**Problem**: GitHub Pages shows 404
-
-**Solution**:
-- Wait 2-3 minutes after first deployment
-- Check GitHub Actions tab for build status
-- Verify `frontend` folder exists and has `index.html`
-
-## Architecture
-
-```
-┌─────────────────────────────────────┐
-│   GitHub Pages (Static Frontend)   │
-│   https://username.github.io        │
-└─────────────┬───────────────────────┘
-              │ API Calls
-              ▼
-┌─────────────────────────────────────┐
-│   Render.com (FastAPI Backend)     │
-│   https://app.onrender.com          │
-│                                     │
-│   ┌──────────────┐ ┌─────────────┐│
-│   │ PostgreSQL   │ │  ChromaDB   ││
-│   │   Database   │ │ (Disk Mount)││
-│   └──────────────┘ └─────────────┘│
-└─────────────────────────────────────┘
-```
-
-## Cost Breakdown
-
-### Free Tier (Testing)
-- **GitHub Pages**: Free (unlimited)
-- **Render**: Free tier with limitations
-  - Backend sleeps after 15 min inactivity
-  - 750 hours/month free
-  - Limited resources
-
-**Total: $0/month**
-
-### Production Tier (Recommended)
-- **GitHub Pages**: Free
-- **Render Starter**: $7/month
-  - Always on
-  - 512MB RAM
-  - Better performance
-- **PostgreSQL**: $7/month (Starter)
-- **Disk Storage**: $1/month per GB
-
-**Total: ~$15/month**
-
-## Custom Domain (Optional)
-
-### For GitHub Pages:
-1. Buy domain (e.g., Namecheap, Google Domains)
-2. Add CNAME record: `www` → `YOUR-USERNAME.github.io`
-3. In GitHub repo settings → Pages → Custom domain
-4. Update `CORS_ORIGINS` in backend
-
-### For Backend:
-1. In Render: Settings → Custom Domain
-2. Add domain: `api.yourdomain.com`
-3. Update DNS: Add CNAME `api` → `your-app.onrender.com`
-4. Update `config.js` with new backend URL
-
-## Environment Variables Reference
-
-### Required:
-- `SECRET_KEY`: 32+ char secret (generate new)
-- `ENVIRONMENT`: `production`
-- `DATABASE_URL`: PostgreSQL connection string
-- `CORS_ORIGINS`: Your GitHub Pages URL
-
-### Optional:
-- `ENABLE_HTTPS`: `true` (for HSTS headers)
-- `LOG_LEVEL`: `INFO` or `WARNING`
-- `OPENAI_API_KEY`: For enhanced embeddings
-- `SECONDBRAIN_CHROMA_PATH`: ChromaDB storage path
-
-## Local Testing Before Deploy
-
-Test the Docker build locally:
+### Manual Local Build
 
 ```bash
-# Build
-docker build -t secondbrain-backend .
+cd frontend
+npm install
+npm run build
 
-# Run
-docker run -p 8000:8000 \
-  -e SECRET_KEY="test-secret-key-min-32-chars-long" \
-  -e ENVIRONMENT=development \
-  secondbrain-backend
-
-# Test
-curl http://localhost:8000/health
+# Test locally
+npm run preview
 ```
 
-## Monitoring
+## 🖥️ Backend Deployment (Render.com)
 
-### Render Dashboard:
-- View logs in real-time
-- Monitor CPU/Memory usage
-- Check deployment history
+### Step 1: Create PostgreSQL Database
 
-### Recommended Tools:
-- **Uptime Monitoring**: UptimeRobot (free)
-- **Error Tracking**: Sentry (free tier)
-- **Analytics**: Plausible or Simple Analytics
+1. **Create Database**:
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click "New" → "PostgreSQL"
+   - Name: `secondbrain-db`
+   - Plan: Free (or paid for production)
+   - Region: Choose closest to your users
 
-## Backup Strategy
+2. **Note Database Details**:
+   - Save the `DATABASE_URL` (Internal Database URL)
 
-### Database:
-- Render provides daily backups (paid plans)
-- Manual: `pg_dump` via Render shell
+### Step 2: Create Web Service
 
-### User Data:
-- Notes and embeddings in PostgreSQL
-- ChromaDB data on persistent disk
-- Export via API periodically
+1. **Create Web Service**:
+   - Click "New" → "Web Service"
+   - Connect your GitHub repository
+   - Configuration:
+     ```
+     Name: secondbrain-api
+     Environment: Python 3
+     Build Command: pip install -r requirements.txt
+     Start Command: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+     ```
 
-## Next Steps
+2. **Environment Variables**:
+   ```bash
+   # Required
+   DATABASE_URL=<your-postgresql-url-from-step-1>
+   SECRET_KEY=<generate-32-character-secret>
+   OPENAI_API_KEY=<your-openai-api-key>
+   
+   # Application
+   ENVIRONMENT=production
+   DEBUG=false
+   ENABLE_HTTPS=true
+   LOG_LEVEL=INFO
+   
+   # CORS (adjust if your frontend URL differs)
+   CORS_ORIGINS=https://octopus-ai-secondbrain.github.io,https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io
+   
+   # Server
+   HOST=0.0.0.0
+   ```
 
-1. ✅ Deploy and test
-2. 📊 Set up monitoring
-3. 🔐 Enable 2FA on GitHub/Render
-4. 📧 Configure email notifications for downtime
-5. 📝 Document your custom domain setup
-6. 🎨 Customize branding and theme
+3. **Deploy**:
+   - Click "Deploy Web Service"
+   - First deployment takes 5-10 minutes
+   - Your API will be available at: `https://your-service-name.onrender.com`
 
-## Support
+### Step 3: Run Database Migrations
 
-For issues:
-- Check `MIGRATION_GUIDE.md` for common problems
-- Review Render logs for backend errors
-- Test backend health: `/health` and `/docs` endpoints
-- Check GitHub Actions for deployment failures
+After first deployment:
+
+1. **Connect to Render Shell**:
+   - Go to your web service dashboard
+   - Click "Shell" tab
+   - Run migrations:
+   ```bash
+   alembic upgrade head
+   ```
+
+2. **Create Admin User** (optional):
+   ```bash
+   python scripts/migrate_add_admin.py
+   ```
+
+## 🔧 Configuration Updates
+
+### Update Frontend API URL
+
+Update your GitHub repository secret:
+```bash
+# GitHub repo → Settings → Secrets → Actions
+VITE_API_URL=https://your-actual-backend-name.onrender.com
+```
+
+Then redeploy frontend by pushing to main branch.
+
+### Test the Deployment
+
+1. **Frontend**: Visit `https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io/`
+2. **Backend Health**: Visit `https://your-backend.onrender.com/health`
+3. **API Docs**: Visit `https://your-backend.onrender.com/docs`
+
+## 🔒 Security Considerations
+
+### Production Secrets
+
+Generate strong secrets:
+```bash
+# Generate SECRET_KEY (32+ characters)
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# Or use openssl
+openssl rand -base64 32
+```
+
+### Environment Variables
+
+Never commit real secrets to git. Use:
+- `.env.development` for local development
+- Render environment variables for production
+- GitHub Secrets for frontend build-time variables
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **CORS Errors**:
+   - Check `CORS_ORIGINS` includes your GitHub Pages URL
+   - Verify frontend `VITE_API_URL` points to correct backend
+
+2. **Database Connection**:
+   - Ensure `DATABASE_URL` is correctly set
+   - Check Render database is running
+   - Verify migrations have been run
+
+3. **Authentication Issues**:
+   - Check `SECRET_KEY` is set and consistent
+   - Verify JWT tokens are being sent correctly
+
+4. **Build Failures**:
+   - Check build logs in Render dashboard
+   - Ensure all dependencies in `requirements.txt`
+   - Verify Python version compatibility
+
+### Logs and Monitoring
+
+1. **Frontend Logs**: GitHub Actions tab shows build logs
+2. **Backend Logs**: Render service dashboard → Logs tab
+3. **Database Logs**: Render PostgreSQL dashboard → Logs
+
+## 💰 Cost Estimation
+
+### Free Tier Limits
+
+**GitHub Pages**: Unlimited for public repos
+**Render Free Tier**:
+- Web Service: 750 hours/month (enough for 24/7)
+- PostgreSQL: 1GB storage, 1 month retention
+- Limitations: Sleeps after 15 min inactivity
+
+### Upgrading to Paid
+
+For production use, consider:
+- **Render Starter Plan** ($7/month): No sleep, better performance
+- **PostgreSQL Starter** ($7/month): 1GB storage, daily backups
+
+## 🔄 CI/CD Pipeline
+
+### Automatic Deployments
+
+1. **Frontend**: Auto-deploys on push to `main`
+2. **Backend**: Auto-deploys on push to `main` (if connected to GitHub)
+
+### Manual Deployments
+
+```bash
+# Frontend only
+git push origin main
+
+# Force backend redeploy (if needed)
+# Go to Render dashboard → Manual Deploy
+```
+
+## 📱 Mobile Considerations
+
+The app is responsive and works on mobile browsers. For better mobile experience:
+1. Add PWA manifest (future enhancement)
+2. Optimize for touch interactions
+3. Consider offline functionality
 
 ---
 
-**Your SecondBrain is now live! 🧠✨**
+## 🆘 Need Help?
+
+1. **Frontend Issues**: Check GitHub Actions build logs
+2. **Backend Issues**: Check Render service logs  
+3. **Database Issues**: Check Render PostgreSQL logs
+4. **CORS Issues**: Verify environment variables match URLs
+
+For additional support, check the project issues or create a new one with:
+- Error messages
+- Relevant logs
+- Steps to reproduce
