@@ -57,8 +57,18 @@ def check_database_schema():
     """
     try:
         with engine.connect() as connection:
-            # Check for existence of key tables
-            result = connection.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'notes')"))
+            # Check for existence of key tables - works for both SQLite and PostgreSQL
+            db_url = str(engine.url)
+            if 'sqlite' in db_url:
+                # SQLite query
+                result = connection.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'notes')"))
+            else:
+                # PostgreSQL query
+                result = connection.execute(text(
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_schema='public' AND table_name IN ('users', 'notes')"
+                ))
+            
             existing_tables = {row[0] for row in result.fetchall()}
             
             required_tables = {'users', 'notes'}
