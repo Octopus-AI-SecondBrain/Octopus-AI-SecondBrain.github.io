@@ -178,11 +178,25 @@ allowed_hosts = [
     "localhost", 
     "127.0.0.1", 
     "*.localhost", 
-    "*.onrender.com", 
-    "*.github.io",
-    "octopus-ai-secondbrain.github.io",
-    "testserver"
+    "testserver"  # For testing
 ]
+
+# Add environment-specific hosts
+if settings.is_production():
+    # Production hosts
+    render_domain = os.getenv("RENDER_EXTERNAL_URL")
+    if render_domain:
+        # Extract domain from full Render URL
+        domain = render_domain.replace("https://", "").replace("http://", "").split("/")[0]
+        allowed_hosts.append(domain)
+    else:
+        # Fallback pattern for Render
+        allowed_hosts.append("*.onrender.com")
+    
+    # GitHub Pages host
+    github_pages_host = os.getenv("GITHUB_PAGES_HOST", "octopus-ai-secondbrain.github.io")
+    allowed_hosts.append(github_pages_host)
+    allowed_hosts.append("*.github.io")  # Allow all GitHub Pages hosts
 
 # Add CORS origins as allowed hosts
 if hasattr(settings, 'cors') and settings.cors.allowed_origins:
@@ -259,15 +273,20 @@ async def startup_event():
         test_environment = (
             "test" in settings.database.url.lower() or
             "pytest" in str(Path.cwd()) or
-            os.getenv("PYTEST_CURRENT_TEST") is not None
+            os.getenv("PYTEST_CURRENT_TEST") is not None or
+            os.getenv("TESTING") == "true"
         )
         
         if not test_environment:
-            # Raise exception to prevent startup if database is not properly initialized
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database not properly initialized. Please run 'alembic upgrade head' to create the required tables."
+            # Create a runtime error to stop application startup
+            # HTTPException doesn't work in startup events, need to raise RuntimeError
+            error_msg = (
+                "CRITICAL: Database schema not initialized. "
+                "Required tables (users, notes) are missing. "
+                "Please run 'alembic upgrade head' to create the database schema before starting the application."
             )
+            logger.critical(error_msg)
+            raise RuntimeError(error_msg)
         else:
             logger.warning("Database schema missing but allowing startup in test environment")
     

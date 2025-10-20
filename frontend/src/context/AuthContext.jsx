@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useCallback } from 'react'
 import api, { onUnauthorized } from '../utils/api'
+import { checkHealth, onHealthChange } from '../utils/healthCheck'
 import toast from 'react-hot-toast'
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -36,6 +37,13 @@ export const AuthProvider = ({ children }) => {
     
     const performAuthCheck = async () => {
       if (mounted && !initialized) {
+        // Check service health first
+        const health = await checkHealth()
+        if (!health.healthy) {
+          console.warn('Service health check failed:', health)
+          // Don't block auth check, but log the issue
+        }
+        
         await checkAuth()
       }
     }
@@ -69,6 +77,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, [initialized])
 
+  // Subscribe to health status changes
+  useEffect(() => {
+    const unsubscribe = onHealthChange((health) => {
+      // Only show health-related toasts if user is initialized and there's a real issue
+      if (!initialized) return
+      
+      if (!health.healthy && health.status === 'error') {
+        // Don't spam with repeated error messages
+        if (health.error?.response?.status === 503) {
+          console.warn('Service temporarily unavailable:', health)
+        } else if (health.error?.message === 'Network Error') {
+          console.warn('Network connectivity issue:', health)
+        }
+      }
+    })
+
+    return unsubscribe
+  }, [initialized])
+
   const login = async (username, password) => {
     try {
       setLoading(true)
@@ -82,10 +109,29 @@ export const AuthProvider = ({ children }) => {
         },
       })
 
-      // Check auth status after login
-      await checkAuth()
+      // Check auth status after login with retries for cookie propagation
+      let authSuccess = false
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, attempt * 200)) // Progressive delay
+        try {
+          await checkAuth()
+          if (isAuthenticated) {
+            authSuccess = true
+            break
+          }
+        } catch (authError) {
+          if (attempt === 3) {
+            console.warn('Auth check failed after login, but login was successful')
+          }
+        }
+      }
       
-      toast.success('Welcome back! 🧠')
+      if (authSuccess) {
+        toast.success('Welcome back! 🧠')
+      } else {
+        toast.success('Login successful! If you experience issues, please refresh the page.')
+      }
+      
       return { success: true }
     } catch (error) {
       let message = 'Login failed. Please check your credentials.'
@@ -95,17 +141,23 @@ export const AuthProvider = ({ children }) => {
       const status = error?.response?.status
 
       if (typeof data?.detail === 'string') {
-        // Backend provided a clear string message (e.g., database initialization error)
+        // Backend provided a clear string message
         message = data.detail
         
-        // If it's a database initialization error, provide additional context
-        if (status === 503 && message.includes('alembic upgrade head')) {
-          message += '\n\nThis appears to be a setup issue. Please contact support or check the developer console.'
+        // Differentiate between service issues and credential problems
+        if (status === 503) {
+          if (message.includes('Database')) {
+            message = 'Service is initializing. Please try again in a moment.'
+          } else {
+            message = 'Service temporarily unavailable. Please try again later.'
+          }
         }
       } else if (status === 0 || error?.message === 'Network Error') {
-        message = 'Cannot reach server. Is the backend running on port 8000?'
-      } else if (status === 503) {
-        message = 'Service temporarily unavailable. Please try again later.'
+        message = 'Cannot reach server. Please check your connection.'
+      } else if (status >= 500) {
+        message = 'Server error. Please try again later.'
+      } else if (status === 401) {
+        message = 'Invalid username or password.'
       }
 
       toast.error(message)
@@ -122,8 +174,14 @@ export const AuthProvider = ({ children }) => {
       // Attempt signup
       await api.post('/auth/signup', { username: cleanUsername, password })
 
-      // Auto-login after signup
-      return await login(cleanUsername, password)
+      // Auto-login after signup with improved error handling
+      const loginResult = await login(cleanUsername, password)
+      
+      if (loginResult.success) {
+        toast.success('Account created successfully! Welcome to SecondBrain! 🧠')
+      }
+      
+      return loginResult
     } catch (error) {
       let message = 'Signup failed. Please try again.'
 
@@ -141,14 +199,20 @@ export const AuthProvider = ({ children }) => {
         // Backend provided a clear string message (e.g., username taken, migration needed)
         message = data.detail
         
-        // If it's a database initialization error, provide additional context
-        if (status === 503 && message.includes('alembic upgrade head')) {
-          message += '\n\nThis appears to be a setup issue. Please contact support or check the developer console.'
+        // Differentiate between service issues and validation problems
+        if (status === 503) {
+          if (message.includes('Database')) {
+            message = 'Service is initializing. Please try again in a moment.'
+          } else {
+            message = 'Service temporarily unavailable. Please try again later.'
+          }
+        } else if (status === 400 && message.includes('already taken')) {
+          message = 'Username is already taken. Please choose a different one.'
         }
       } else if (status === 0 || error?.message === 'Network Error') {
-        message = 'Cannot reach server. Is the backend running on 8000?'
-      } else if (status === 503) {
-        message = 'Service temporarily unavailable. Please try again later.'
+        message = 'Cannot reach server. Please check your connection.'
+      } else if (status >= 500) {
+        message = 'Server error. Please try again later.'
       }
 
       toast.error(message)

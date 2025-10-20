@@ -1,6 +1,31 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Get API URL from environment variable  
+// VITE_API_URL MUST be set to avoid configuration errors
+const getApiUrl = () => {
+  const viteApiUrl = import.meta.env.VITE_API_URL
+  const isDevelopment = import.meta.env.DEV
+  
+  // Always require VITE_API_URL to be explicitly set
+  if (!viteApiUrl) {
+    const errorMsg = isDevelopment 
+      ? 'VITE_API_URL must be set. Add VITE_API_URL=http://localhost:8000 to your .env.local file'
+      : 'VITE_API_URL must be set in production to avoid mixed content errors'
+    
+    console.error(`CRITICAL: ${errorMsg}`)
+    
+    // In development, show a helpful error. In production, fail fast.
+    if (isDevelopment) {
+      throw new Error(`Missing VITE_API_URL environment variable.\n\n${errorMsg}`)
+    } else {
+      return 'https://api-not-configured.invalid'
+    }
+  }
+  
+  return viteApiUrl
+}
+
+const API_URL = getApiUrl()
 
 const api = axios.create({
   baseURL: API_URL,

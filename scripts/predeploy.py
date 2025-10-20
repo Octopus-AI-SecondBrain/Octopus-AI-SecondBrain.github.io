@@ -74,9 +74,10 @@ def main():
     
     # Run migrations
     if not run_migrations():
-        print("❌ Migration failed, but continuing startup...")
-        # Don't exit with error on Render, let the app handle it
-        # sys.exit(1)
+        print("❌ Migration failed - deployment cannot continue!")
+        print("💡 Check database connection and Alembic configuration")
+        # Exit with error code to prevent deployment with empty schema
+        sys.exit(1)
     
     print("✅ Pre-deployment setup completed!")
 

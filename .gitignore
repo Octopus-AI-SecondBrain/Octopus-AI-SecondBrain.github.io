@@ -44,11 +44,13 @@ venv.bak/
 .env.local
 .env.*.local
 
-# Data directories
-data/
+# Data directories - exclude database files and vector stores
+data/database/
+data/vector_db/
 *.db
 *.sqlite
 *.sqlite3
+secondbrain.db
 
 # Vector databases
 chroma_db/
@@ -58,6 +60,8 @@ vector_db/
 *.log
 logs/
 frontend.log
+backend/map-frontend/frontend.log
+CLEANUP_LOG.txt
 
 # Test/Debug files
 auth-test.html

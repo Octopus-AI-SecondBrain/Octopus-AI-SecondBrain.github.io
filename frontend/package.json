@@ -8,7 +8,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "format": "prettier --write \"src/**/*.{js,jsx,json,css}\""
+    "lint:fix": "eslint src --ext js,jsx --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,json,css}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,json,css}\"",
+    "test": "echo 'No tests specified yet'",
+    "test:ci": "npm run test",
+    "typecheck": "tsc --noEmit",
+    "web": "npm run dev"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -1,14 +1,16 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages (Alternative)
 
 on:
+  workflow_dispatch:  # Manual trigger only
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    paths:
+      - "frontend/**"
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     
     steps:
     - name: Checkout
@@ -25,6 +27,12 @@ jobs:
       run: |
         cd frontend
         npm ci
+
+    - name: Lint and format check
+      run: |
+        cd frontend
+        npm run lint
+        npm run format:check
         
     - name: Build frontend
       run: |
@@ -32,11 +40,11 @@ jobs:
         npm run build
       env:
         NODE_ENV: production
-        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://your-backend.onrender.com' }}
+        VITE_BASE_PATH: /secondbrain/
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./frontend/dist
@@ -44,3 +52,5 @@ jobs:
         enable_jekyll: false
         # Clean up old files
         force_orphan: true
+        # Custom domain (optional)
+        # cname: your-domain.com

@@ -160,26 +160,27 @@ def signup(
     except HTTPException:
         raise
     except OperationalError as exc:
+        db.rollback()  # Ensure rollback on database errors
         # Specifically handle database operational errors (missing tables, etc.)
         error_message = str(exc).lower()
         if "no such table" in error_message or "table" in error_message:
             logger.error(f"Database schema missing - likely need to run migrations: {exc}")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database not properly initialized. Please run 'alembic upgrade head' to create the required tables."
+                detail="Service temporarily unavailable. Database initialization required."
             )
         else:
             logger.error(f"Database operational error during signup: {exc}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database service temporarily unavailable"
+                detail="Service temporarily unavailable. Please try again later."
             )
     except Exception as exc:
         logger.error(f"Error creating user: {exc}", exc_info=True)
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error creating user account"
+            detail="Service temporarily unavailable. Please try again later."
         )
 
 
@@ -232,13 +233,15 @@ def login_for_access_token(
         access_token = create_access_token({"sub": db_user.username})
         
         # Set secure, httpOnly cookie
-        # In production with HTTPS, also set secure=True
+        # Use SameSite=None for cross-origin when HTTPS enabled (GitHub Pages → Render)
+        # Use SameSite=Lax for same-origin development
+        is_cross_site = settings.enable_https and settings.is_production()
         response.set_cookie(
             key="access_token",
             value=access_token,
             httponly=True,  # Prevents JavaScript access
-            secure=settings.is_production() and settings.enable_https,  # Only send over HTTPS in production
-            samesite="lax",  # CSRF protection
+            secure=is_cross_site,  # Secure required for SameSite=None
+            samesite="none" if is_cross_site else "lax",  # None for cross-site, Lax for dev
             max_age=settings.security.access_token_expire_minutes * 60,  # Convert to seconds
         )
         
@@ -259,19 +262,19 @@ def login_for_access_token(
             logger.error(f"Database schema missing during login - likely need to run migrations: {exc}")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database not properly initialized. Please run 'alembic upgrade head' to create the required tables."
+                detail="Service temporarily unavailable. Database initialization required."
             )
         else:
             logger.error(f"Database operational error during login: {exc}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database service temporarily unavailable"
+                detail="Service temporarily unavailable. Please try again later."
             )
     except Exception as exc:
         logger.error(f"Error during login: {exc}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error processing login"
+            detail="Service temporarily unavailable. Please try again later."
         )
 
 
@@ -353,6 +356,13 @@ def logout(response: Response) -> dict:
     Returns:
         Success message
     """
-    response.delete_cookie(key="access_token", httponly=True, samesite="lax")
+    # Match cookie settings used during login
+    is_cross_site = settings.enable_https and settings.is_production()
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=is_cross_site,
+        samesite="none" if is_cross_site else "lax"
+    )
     logger.info("User logged out successfully")
     return {"message": "Successfully logged out"}

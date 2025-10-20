@@ -55,6 +55,8 @@ This application is ready for production deployment with:
 - Both `localhost` and `127.0.0.1` variants
 - Production GitHub Pages origin
 
+**Important**: Use **host origins only** (e.g., `https://example.com`), not paths (e.g., ~~`https://example.com/path`~~). Browsers reject path-based origins.
+
 To use a custom port, set the `CORS_ORIGINS` environment variable:
 ```bash
 export CORS_ORIGINS="http://localhost:3001,http://127.0.0.1:3001"
@@ -178,12 +180,12 @@ All configuration is managed through environment variables (see `.env.example`):
 **Authentication:**
 - JWTs are stored in secure, httpOnly cookies (not localStorage)
 - Cookies are marked as `secure` in production with HTTPS enabled
-- `SameSite=Lax` for CSRF protection
+- `SameSite=None` when HTTPS enabled (for cross-origin GitHub Pages → Render), `Lax` for development
 - Token expiration configurable via `ACCESS_TOKEN_EXPIRE_MINUTES` (default: 30)
 
 **Optional:**
 - `OPENAI_API_KEY`: For OpenAI embeddings (recommended for better semantic search)
-- `CORS_ORIGINS`: Comma-separated list of allowed origins (defaults include common dev ports: 3000, 5173, 4173, 8080)
+- `CORS_ORIGINS`: Comma-separated list of allowed origins (defaults include common dev ports: 3000, 5173, 4173, 8080). **Use host URLs only, no path segments** (e.g., `https://example.com` not `https://example.com/path`)
 - `LOG_LEVEL`: Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 - `CHROMA_PATH`: Vector database storage path (default: ./data/vector_db)
 

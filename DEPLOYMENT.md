@@ -85,8 +85,9 @@ npm run preview
    ENABLE_HTTPS=true
    LOG_LEVEL=INFO
    
-   # CORS (adjust if your frontend URL differs)
-   CORS_ORIGINS=https://octopus-ai-secondbrain.github.io,https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io
+   # CORS - use host origins only, no path segments
+   # Add your Render backend URL and GitHub Pages origin
+   CORS_ORIGINS=https://octopus-ai-secondbrain.github.io,https://your-backend-name.onrender.com
    
    # Server
    HOST=0.0.0.0
@@ -97,9 +98,21 @@ npm run preview
    - First deployment takes 5-10 minutes
    - Your API will be available at: `https://your-service-name.onrender.com`
 
-### Step 3: Run Database Migrations
+### Step 3: Configure Automatic Migrations
 
-After first deployment:
+**IMPORTANT**: Database migrations must run before the application starts!
+
+**Option 1: Use predeploy script (Recommended)**
+
+Add to your Render web service configuration:
+```bash
+# In Render Dashboard → Settings → Build & Deploy
+Build Command: pip install -r requirements.txt
+Pre-Deploy Command: alembic upgrade head
+Start Command: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+```
+
+**Option 2: Manual migration via Shell** (for first-time setup):
 
 1. **Connect to Render Shell**:
    - Go to your web service dashboard
@@ -114,6 +127,8 @@ After first deployment:
    python scripts/migrate_add_admin.py
    ```
 
+The application startup will now fail gracefully with a 503 error if migrations haven't been run, preventing silent schema issues.
+
 ## 🔧 Configuration Updates
 
 ### Update Frontend API URL
@@ -124,13 +139,44 @@ Update your GitHub repository secret:
 VITE_API_URL=https://your-actual-backend-name.onrender.com
 ```
 
-Then redeploy frontend by pushing to main branch.
+### Required Environment Variables
+
+**Backend (Render)**:
+```bash
+# Database
+DATABASE_URL=<postgresql-connection-string>
+
+# Security  
+SECRET_KEY=<32-character-random-string>
+ENVIRONMENT=production
+ENABLE_HTTPS=true
+
+# CORS - GitHub Pages and Render origins
+CORS_ORIGINS=https://octopus-ai-secondbrain.github.io,https://your-backend.onrender.com
+GITHUB_PAGES_URL=https://octopus-ai-secondbrain.github.io
+RENDER_EXTERNAL_URL=https://your-backend.onrender.com
+
+# Optional
+OPENAI_API_KEY=<your-openai-key>
+```
+
+**Frontend (GitHub Secrets)**:
+```bash
+VITE_API_URL=https://your-backend.onrender.com
+```
 
 ### Test the Deployment
 
-1. **Frontend**: Visit `https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io/`
+1. **Frontend**: Visit `https://octopus-ai-secondbrain.github.io/secondbrain/`
 2. **Backend Health**: Visit `https://your-backend.onrender.com/health`
 3. **API Docs**: Visit `https://your-backend.onrender.com/docs`
+
+### Testing Cross-Origin Authentication
+
+1. **Sign up**: Create an account from the frontend
+2. **Login**: Test authentication flow
+3. **Check cookies**: Verify cookies are set with `SameSite=None` in production
+4. **Protected routes**: Test authenticated API calls
 
 ## 🔒 Security Considerations
 
@@ -145,12 +191,20 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 openssl rand -base64 32
 ```
 
+### Cross-Origin Authentication
+
+The backend is configured to support cross-origin authentication from GitHub Pages to Render:
+
+- **Cookies**: Use `SameSite=None; Secure` when `ENABLE_HTTPS=true` for cross-site cookies to work
+- **CORS**: Properly configured to accept credentials from GitHub Pages origin
+- **HTTPS Required**: Both frontend and backend must use HTTPS for cross-origin cookies
+
 ### Environment Variables
 
 Never commit real secrets to git. Use:
-- `.env.development` for local development
-- Render environment variables for production
-- GitHub Secrets for frontend build-time variables
+- `.env` or `.env.development` for local development (gitignored)
+- Render environment variables for backend production config
+- GitHub Secrets for frontend build-time variables (VITE_API_URL)
 
 ## 🚨 Troubleshooting
 

@@ -164,17 +164,15 @@ class CORSSettings(BaseModel):
     allowed_origins: List[str] = Field(
         default=[
             "http://localhost:3000",
-            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3000", 
             "http://localhost:8080",
             "http://127.0.0.1:8080",
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "http://localhost:4173",
-            "http://127.0.0.1:4173",
-            "https://octopus-ai-secondbrain.github.io",
-            "https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io"
+            "http://127.0.0.1:4173"
         ],
-        description="Allowed CORS origins"
+        description="Allowed CORS origins - use host URLs only, no path segments"
     )
     allow_credentials: bool = Field(
         default=True,
@@ -197,13 +195,33 @@ class CORSSettings(BaseModel):
     @field_validator('allowed_origins', mode='before')
     @classmethod
     def parse_cors_origins(cls, v):
-        """Parse CORS_ORIGINS environment variable."""
+        """Parse CORS_ORIGINS environment variable and add production origins."""
         env_origins = os.getenv("CORS_ORIGINS")
         if env_origins:
             # Split by comma and clean up
             origins = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
             return origins
-        return v if isinstance(v, list) else [v]
+        
+        # Start with default origins
+        origins = v if isinstance(v, list) else [v]
+        
+        # Add production origins from environment variables
+        environment = os.getenv("ENVIRONMENT", "development")
+        if environment in ("staging", "production"):
+            # Add Render backend URL (for self-references)
+            render_url = os.getenv("RENDER_EXTERNAL_URL")
+            if render_url and render_url not in origins:
+                origins.append(render_url)
+            
+            # Add GitHub Pages frontend URL
+            github_pages_url = os.getenv("GITHUB_PAGES_URL")
+            if github_pages_url and github_pages_url not in origins:
+                origins.append(github_pages_url)
+            elif "octopus-ai-secondbrain.github.io" not in str(origins):
+                # Default GitHub Pages URL if not provided
+                origins.append("https://octopus-ai-secondbrain.github.io")
+        
+        return origins
 
 
 class RateLimitSettings(BaseModel):
@@ -383,14 +401,12 @@ def _load_settings() -> Settings:
             allowed_origins=os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else [
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
-                "http://localhost:8080",
+                "http://localhost:8080", 
                 "http://127.0.0.1:8080",
                 "http://localhost:5173",
                 "http://127.0.0.1:5173",
                 "http://localhost:4173",
-                "http://127.0.0.1:4173",
-                "https://octopus-ai-secondbrain.github.io",
-                "https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io"
+                "http://127.0.0.1:4173"
             ],
         ),
         openai=OpenAISettings(
