@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Octopus SecondBrain - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: #1e293b;
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: #334155;
+        }
+
+        .nav-item.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .demo-badge {
+            background: #fbbf24;
+            color: #78350f;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 600px;
+            padding: 10px 16px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Notes Grid */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .note-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .note-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+
+        .note-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #f1f5f9;
+        }
+
+        .note-preview {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .note-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            background: #334155;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .tag:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Note Detail View */
+        .note-detail {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .note-detail-header {
+            margin-bottom: 24px;
+        }
+
+        .note-detail-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .note-detail-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+
+        .note-detail-content h1 {
+            font-size: 28px;
+            margin-top: 32px;
+            margin-bottom: 16px;
+        }
+
+        .note-detail-content h2 {
+            font-size: 24px;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        .note-detail-content p {
+            margin-bottom: 16px;
+        }
+
+        .note-detail-content ul, .note-detail-content ol {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        .note-detail-content li {
+            margin-bottom: 8px;
+        }
+
+        .back-btn {
+            background: #334155;
+            color: #e2e8f0;
+            margin-bottom: 24px;
+        }
+
+        .back-btn:hover {
+            background: #475569;
+        }
+
+        /* Neural Map */
+        .neural-map {
+            width: 100%;
+            height: 600px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .map-placeholder {
+            font-size: 64px;
+        }
+
+        .map-text {
+            font-size: 18px;
+            color: #94a3b8;
+        }
+
+        /* Search Results */
+        .search-results {
+            max-width: 800px;
+        }
+
+        .search-result-item {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .search-result-item:hover {
+            border-color: #3b82f6;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f1f5f9;
+        }
+
+        .result-excerpt {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px;
+            color: #64748b;
+        }
+
+        /* Stats Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        /* Tag Cloud */
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .tag-cloud-item {
+            padding: 8px 16px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tag-cloud-item:hover {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">🐙</span>
+                <span>SecondBrain</span>
+            </div>
+            
+            <div class="nav-item active" onclick="showView('notes')">
+                <span>📝</span>
+                <span>Notes</span>
+            </div>
+            <div class="nav-item" onclick="showView('search')">
+                <span>🔍</span>
+                <span>Search</span>
+            </div>
+            <div class="nav-item" onclick="showView('neural-map')">
+                <span>🧠</span>
+                <span>Neural Map</span>
+            </div>
+            <div class="nav-item" onclick="showView('dashboard')">
+                <span>📊</span>
+                <span>Dashboard</span>
+            </div>
+            
+            <div class="demo-badge">🎮 DEMO MODE</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <input type="text" class="search-bar" id="searchInput" placeholder="Search your notes... (try 'machine learning' or 'python')" onkeyup="handleSearch(event)">
+                <button class="btn btn-primary" onclick="showCreateNote()">+ New Note</button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Notes View -->
+                <div id="notes-view" class="view active">
+                    <h2 class="section-title">All Notes (15)</h2>
+                    <div class="notes-grid" id="notesGrid"></div>
+                </div>
+
+                <!-- Note Detail View -->
+                <div id="note-detail-view" class="view">
+                    <div class="note-detail">
+                        <button class="btn back-btn" onclick="showView('notes')">← Back to Notes</button>
+                        <div class="note-detail-header">
+                            <h1 class="note-detail-title" id="detailTitle"></h1>
+                            <div class="note-tags" id="detailTags"></div>
+                        </div>
+                        <div class="note-detail-content" id="detailContent"></div>
+                    </div>
+                </div>
+
+                <!-- Search View -->
+                <div id="search-view" class="view">
+                    <h2 class="section-title">Search Results</h2>
+                    <div class="search-results" id="searchResults">
+                        <div class="no-results">
+                            <p>🔍 Type in the search bar to find notes</p>
+                            <p style="margin-top: 8px; font-size: 14px;">Try: "machine learning", "python", "productivity"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Neural Map View -->
+                <div id="neural-map-view" class="view">
+                    <h2 class="section-title">Neural Map - 3D Visualization</h2>
+                    <div class="neural-map">
+                        <div class="map-placeholder">🧠🔗✨</div>
+                        <div class="map-text">Interactive 3D map showing connections between your notes</div>
+                        <div class="map-text" style="font-size: 14px;">Related notes are connected based on shared topics and tags</div>
+                    </div>
+                    
+                    <div style="margin-top: 32px;">
+                        <h3 class="section-title">Connected Topics</h3>
+                        <div class="tag-cloud">
+                            <div class="tag-cloud-item" onclick="filterByTag('AI')">AI</div>
+                            <div class="tag-cloud-item" onclick="filterByTag('machine-learning')">Machine Learning</div>
+                            <div class="tag-cloud-item" onclick="filterByTag('python')">Python</div>
+                            <div class="tag-cloud-item" onclick="filterByTag('data-science')">Data Science</div>
+                            <div class="tag-cloud-item" onclick="filterByTag('productivity')">Productivity</div>
+                            <div class="tag-cloud-item" onclick="filterByTag('programming')">Programming</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard View -->
+                <div id="dashboard-view" class="view">
+                    <h2 class="section-title">Dashboard</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">15</div>
+                            <div class="stat-label">Total Notes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">Unique Tags</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">45</div>
+                            <div class="stat-label">Connections</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">7</div>
+                            <div class="stat-label">Days Active</div>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">Popular Tags</h3>
+                    <div class="tag-cloud">
+                        <div class="tag-cloud-item" onclick="filterByTag('AI')">🤖 AI (6)</div>
+                        <div class="tag-cloud-item" onclick="filterByTag('machine-learning')">🧠 Machine Learning (5)</div>
+                        <div class="tag-cloud-item" onclick="filterByTag('python')">🐍 Python (3)</div>
+                        <div class="tag-cloud-item" onclick="filterByTag('programming')">💻 Programming (4)</div>
+                        <div class="tag-cloud-item" onclick="filterByTag('data-science')">📊 Data Science (3)</div>
+                        <div class="tag-cloud-item" onclick="filterByTag('productivity')">⚡ Productivity (2)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo Notes Data
+        const demoNotes = [
+            {
+                id: 1,
+                title: "Welcome to Your Second Brain! 🧠",
+                content: "This is your personal knowledge management system powered by AI. Key features include: Neural Map for visualizing connections, Semantic Search to find notes by meaning, Auto-Linking to discover relationships, and Smart Tags for organization.",
+                fullContent: `<h1>Welcome to Octopus SecondBrain!</h1>
+                <p>This is your personal knowledge management system powered by AI. Here's what makes it special:</p>
+                <h2>Key Features</h2>
+                <ul>
+                    <li><strong>Neural Map</strong>: Visualize connections between your notes in 3D</li>
+                    <li><strong>Semantic Search</strong>: Find notes by meaning, not just keywords</li>
+                    <li><strong>Auto-Linking</strong>: Automatically discover relationships</li>
+                    <li><strong>Smart Tags</strong>: Organize with #productivity #learning</li>
+                </ul>
+                <h2>Quick Start</h2>
+                <ol>
+                    <li>Create notes about anything</li>
+                    <li>Add tags using #hashtag format</li>
+                    <li>Visit the Neural Map to see connections</li>
+                    <li>Use semantic search to find related ideas</li>
+                </ol>
+                <p>The more notes you create, the more powerful your second brain becomes!</p>`,
+                tags: ["welcome", "tutorial", "getting-started"]
+            },
+            {
+                id: 2,
+                title: "Machine Learning Fundamentals",
+                content: "Machine learning is a subset of artificial intelligence that enables systems to learn from experience. It includes supervised learning, unsupervised learning, and reinforcement learning.",
+                fullContent: `<h1>Machine Learning Basics</h1>
+                <p>Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed.</p>
+                <h2>Types of ML</h2>
+                <ol>
+                    <li><strong>Supervised Learning</strong>: Learning from labeled data (classification, regression)</li>
+                    <li><strong>Unsupervised Learning</strong>: Finding patterns in unlabeled data (clustering, dimensionality reduction)</li>
+                    <li><strong>Reinforcement Learning</strong>: Learning through trial and error with rewards</li>
+                </ol>
+                <h2>Key Concepts</h2>
+                <ul>
+                    <li>Training data vs test data</li>
+                    <li>Overfitting and underfitting</li>
+                    <li>Feature engineering</li>
+                    <li>Model evaluation metrics</li>
+                </ul>
+                <p>Machine learning powers many modern applications like recommendation systems, image recognition, and natural language processing.</p>`,
+                tags: ["machine-learning", "AI", "data-science", "programming"]
+            },
+            {
+                id: 3,
+                title: "Neural Networks Deep Dive",
+                content: "Neural networks are inspired by the human brain and consist of interconnected nodes organized in layers. They include input, hidden, and output layers.",
+                fullContent: `<h1>Neural Networks</h1>
+                <p>Neural networks are inspired by the human brain and consist of interconnected nodes (neurons) organized in layers.</p>
+                <h2>Architecture</h2>
+                <ul>
+                    <li><strong>Input Layer</strong>: Receives raw data</li>
+                    <li><strong>Hidden Layers</strong>: Process and transform data</li>
+                    <li><strong>Output Layer</strong>: Produces final predictions</li>
+                </ul>
+                <h2>Training Process</h2>
+                <ol>
+                    <li>Forward propagation: Data flows through network</li>
+                    <li>Loss calculation: Measure error</li>
+                    <li>Backpropagation: Adjust weights to minimize error</li>
+                    <li>Repeat until convergence</li>
+                </ol>
+                <p>Neural networks are the foundation of deep learning and modern AI systems.</p>`,
+                tags: ["neural-networks", "deep-learning", "AI", "machine-learning"]
+            },
+            {
+                id: 4,
+                title: "Python Best Practices",
+                content: "Writing clean, maintainable Python code is essential. Follow PEP 8, use meaningful names, write docstrings, and keep functions small and focused.",
+                fullContent: `<h1>Python Best Practices</h1>
+                <p>Writing clean, maintainable Python code is essential for long-term project success.</p>
+                <h2>Code Style</h2>
+                <ul>
+                    <li>Follow PEP 8 style guide</li>
+                    <li>Use meaningful variable names</li>
+                    <li>Write docstrings for functions and classes</li>
+                    <li>Keep functions small and focused</li>
+                </ul>
+                <h2>Tools</h2>
+                <ul>
+                    <li>black for code formatting</li>
+                    <li>pylint for linting</li>
+                    <li>pytest for testing</li>
+                    <li>mypy for type checking</li>
+                </ul>`,
+                tags: ["python", "programming", "best-practices", "coding"]
+            },
+            {
+                id: 5,
+                title: "Data Science Workflow",
+                content: "A typical data science project follows key stages: problem definition, data collection, exploratory analysis, modeling, evaluation, and deployment.",
+                fullContent: `<h1>Data Science Project Workflow</h1>
+                <ol>
+                    <li><strong>Problem Definition</strong>: Understand business objectives and define success metrics</li>
+                    <li><strong>Data Collection</strong>: Gather relevant data sources and ensure quality</li>
+                    <li><strong>EDA</strong>: Exploratory Data Analysis - visualize and understand patterns</li>
+                    <li><strong>Modeling</strong>: Select and train appropriate algorithms</li>
+                    <li><strong>Evaluation</strong>: Assess model performance</li>
+                    <li><strong>Deployment</strong>: Production environment setup and monitoring</li>
+                </ol>
+                <p>This workflow is iterative - you'll often go back and refine earlier stages.</p>`,
+                tags: ["data-science", "workflow", "analytics", "machine-learning"]
+            },
+            {
+                id: 6,
+                title: "Knowledge Graphs",
+                content: "Knowledge graphs represent information as networks of entities and relationships. They power Google's knowledge panel, recommendation systems, and this SecondBrain app!",
+                fullContent: `<h1>Knowledge Graphs</h1>
+                <p>Knowledge graphs represent information as a network of entities and their relationships.</p>
+                <h2>Applications</h2>
+                <ul>
+                    <li>Google's knowledge panel</li>
+                    <li>Recommendation systems</li>
+                    <li>Question answering systems</li>
+                    <li>This SecondBrain app!</li>
+                </ul>
+                <p>Knowledge graphs enable machines to understand context and make intelligent connections between disparate pieces of information.</p>`,
+                tags: ["knowledge-graphs", "semantic-networks", "AI", "graph-theory"]
+            },
+            {
+                id: 7,
+                title: "Natural Language Processing",
+                content: "NLP enables computers to understand and generate human language. Core tasks include tokenization, named entity recognition, sentiment analysis, and machine translation.",
+                fullContent: `<h1>Natural Language Processing</h1>
+                <p>NLP enables computers to understand, interpret, and generate human language.</p>
+                <h2>Core Tasks</h2>
+                <ul>
+                    <li>Tokenization: Breaking text into words/sentences</li>
+                    <li>Named Entity Recognition: Extracting names, dates, locations</li>
+                    <li>Sentiment Analysis: Determining emotional tone</li>
+                    <li>Machine Translation: Converting between languages</li>
+                </ul>
+                <p>NLP is revolutionizing how we interact with computers and access information.</p>`,
+                tags: ["NLP", "natural-language-processing", "AI", "machine-learning"]
+            },
+            {
+                id: 8,
+                title: "Vector Embeddings Explained",
+                content: "Embeddings convert discrete data into continuous vector representations. They capture semantic meaning and enable similarity comparisons. Example: 'king' - 'man' + 'woman' ≈ 'queen'",
+                fullContent: `<h1>Vector Embeddings</h1>
+                <p>Embeddings convert discrete data (words, images, etc.) into continuous vector representations.</p>
+                <h2>Why Embeddings?</h2>
+                <ul>
+                    <li>Capture semantic meaning</li>
+                    <li>Enable similarity comparisons</li>
+                    <li>Reduce dimensionality</li>
+                    <li>Work well with neural networks</li>
+                </ul>
+                <p><strong>Example:</strong> 'king' - 'man' + 'woman' ≈ 'queen'</p>
+                <p>Embeddings are the secret sauce behind semantic search!</p>`,
+                tags: ["embeddings", "vectors", "semantic-search", "AI", "NLP"]
+            },
+            {
+                id: 9,
+                title: "Productivity & Note-Taking",
+                content: "Effective note-taking systems like Zettelkasten (atomic notes with heavy linking) and PARA Method (Projects, Areas, Resources, Archive) help organize knowledge.",
+                fullContent: `<h1>Effective Note-Taking Systems</h1>
+                <h2>Zettelkasten</h2>
+                <ul>
+                    <li>Atomic notes (one idea per note)</li>
+                    <li>Heavy linking between notes</li>
+                </ul>
+                <h2>PARA Method</h2>
+                <ul>
+                    <li><strong>P</strong>rojects: Active work with deadlines</li>
+                    <li><strong>A</strong>reas: Ongoing responsibilities</li>
+                    <li><strong>R</strong>esources: Topics of interest</li>
+                    <li><strong>A</strong>rchive: Inactive items</li>
+                </ul>
+                <p>This SecondBrain app combines the best of these systems!</p>`,
+                tags: ["productivity", "note-taking", "zettelkasten", "knowledge-management"]
+            },
+            {
+                id: 10,
+                title: "Graph vs Relational Databases",
+                content: "Relational databases use tables with rows/columns, while graph databases use nodes and relationships. This app uses both: SQLite for notes + vector embeddings for semantic relationships!",
+                fullContent: `<h1>Database Types</h1>
+                <h2>Relational (SQL)</h2>
+                <ul>
+                    <li>Tables with rows and columns</li>
+                    <li>Great for structured data</li>
+                    <li>Examples: PostgreSQL, MySQL</li>
+                </ul>
+                <h2>Graph Databases</h2>
+                <ul>
+                    <li>Nodes and relationships</li>
+                    <li>Perfect for connected data</li>
+                    <li>Examples: Neo4j, Amazon Neptune</li>
+                </ul>
+                <p>This app uses <strong>both</strong>: SQLite for notes + vector embeddings for semantic relationships!</p>`,
+                tags: ["databases", "graph-databases", "SQL", "data-modeling"]
+            },
+            {
+                id: 11,
+                title: "Docker Essentials",
+                content: "Docker packages applications into containers - lightweight, portable environments. Core concepts: Images (blueprints), Containers (running instances), Dockerfile, Docker Compose.",
+                fullContent: `<h1>Docker Essentials</h1>
+                <p>Docker packages applications into containers - lightweight, portable, and consistent environments.</p>
+                <h2>Core Concepts</h2>
+                <ul>
+                    <li><strong>Image</strong>: Blueprint for containers</li>
+                    <li><strong>Container</strong>: Running instance of an image</li>
+                    <li><strong>Dockerfile</strong>: Instructions to build an image</li>
+                    <li><strong>Docker Compose</strong>: Multi-container orchestration</li>
+                </ul>
+                <p>Containerization is essential for modern deployment!</p>`,
+                tags: ["docker", "devops", "containerization", "deployment"]
+            },
+            {
+                id: 12,
+                title: "API Design Best Practices",
+                content: "RESTful API design principles: Use HTTP methods correctly (GET, POST, PUT, DELETE), logical resource URLs, proper status codes (200, 404, 500), and versioning.",
+                fullContent: `<h1>RESTful API Design</h1>
+                <h2>Principles</h2>
+                <ol>
+                    <li><strong>Use HTTP Methods Correctly</strong>: GET (retrieve), POST (create), PUT/PATCH (update), DELETE (remove)</li>
+                    <li><strong>Logical Resource URLs</strong>: /api/users, /api/users/123</li>
+                    <li><strong>Status Codes</strong>: 200 (success), 404 (not found), 500 (server error)</li>
+                    <li><strong>Versioning</strong>: /api/v1/users</li>
+                </ol>
+                <p>Good API design makes integration seamless!</p>`,
+                tags: ["API", "REST", "web-development", "backend"]
+            },
+            {
+                id: 13,
+                title: "Time Management Techniques",
+                content: "Effective techniques: Pomodoro (25-min work blocks), Time Blocking (schedule specific slots), Eisenhower Matrix (urgent vs important), and GTD (Getting Things Done).",
+                fullContent: `<h1>Effective Time Management</h1>
+                <h2>Pomodoro Technique</h2>
+                <ul>
+                    <li>Work for 25 minutes</li>
+                    <li>Take 5-minute break</li>
+                    <li>After 4 pomodoros, take 15-30 minute break</li>
+                </ul>
+                <h2>Eisenhower Matrix</h2>
+                <ol>
+                    <li><strong>Urgent + Important</strong>: Do first</li>
+                    <li><strong>Important + Not Urgent</strong>: Schedule</li>
+                    <li><strong>Urgent + Not Important</strong>: Delegate</li>
+                    <li><strong>Neither</strong>: Eliminate</li>
+                </ol>
+                <p>Time is your most valuable resource!</p>`,
+                tags: ["productivity", "time-management", "getting-things-done", "focus"]
+            },
+            {
+                id: 14,
+                title: "Learning Resources for AI/ML",
+                content: "Best resources: Andrew Ng's ML Course (Coursera), Fast.ai, books like 'Hands-On Machine Learning', YouTube channels (3Blue1Brown, StatQuest), and practice platforms (Kaggle, Hugging Face).",
+                fullContent: `<h1>Best Resources for Learning AI & ML</h1>
+                <h2>Online Courses</h2>
+                <ul>
+                    <li>Andrew Ng's ML Course (Coursera) - Classic introduction</li>
+                    <li>Fast.ai - Practical deep learning</li>
+                    <li>DeepLearning.AI - Specializations</li>
+                </ul>
+                <h2>Practice Platforms</h2>
+                <ul>
+                    <li>Kaggle (competitions & datasets)</li>
+                    <li>Hugging Face (models & datasets)</li>
+                    <li>Papers with Code (implementations)</li>
+                </ul>
+                <p>Consistent practice is key to mastery!</p>`,
+                tags: ["learning", "resources", "AI", "machine-learning", "education"]
+            },
+            {
+                id: 15,
+                title: "Web Development Stack 2025",
+                content: "Modern web dev stack: Frontend (React, Next.js, TailwindCSS), Backend (FastAPI, Node.js), DevOps (Docker, GitHub Actions). This SecondBrain app uses React + Vite + FastAPI + SQLite.",
+                fullContent: `<h1>Modern Web Development</h1>
+                <h2>Frontend</h2>
+                <ul>
+                    <li>React/Vue/Svelte: UI frameworks</li>
+                    <li>Next.js/Nuxt: Full-stack frameworks</li>
+                    <li>TailwindCSS: Utility-first styling</li>
+                </ul>
+                <h2>Backend</h2>
+                <ul>
+                    <li>FastAPI/Django: Python frameworks</li>
+                    <li>Node.js/Deno: JavaScript runtime</li>
+                </ul>
+                <h2>This SecondBrain App Stack</h2>
+                <p>Frontend: React + Vite + TailwindCSS<br>
+                Backend: FastAPI (Python)<br>
+                Database: SQLite + ChromaDB (vectors)</p>`,
+                tags: ["web-development", "programming", "full-stack", "technology"]
+            }
+        ];
+
+        let currentView = 'notes';
+        let filteredNotes = [...demoNotes];
+
+        // Initialize
+        function init() {
+            renderNotes();
+        }
+
+        // Render notes grid
+        function renderNotes() {
+            const grid = document.getElementById('notesGrid');
+            grid.innerHTML = filteredNotes.map(note => `
+                <div class="note-card" onclick="showNoteDetail(${note.id})">
+                    <div class="note-title">${note.title}</div>
+                    <div class="note-preview">${note.content}</div>
+                    <div class="note-tags">
+                        ${note.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Show view
+        function showView(viewName) {
+            // Hide all views
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Show selected view
+            document.getElementById(viewName + '-view').classList.add('active');
+            event.target.closest('.nav-item').classList.add('active');
+            currentView = viewName;
+        }
+
+        // Show note detail
+        function showNoteDetail(noteId) {
+            const note = demoNotes.find(n => n.id === noteId);
+            if (!note) return;
+
+            document.getElementById('detailTitle').textContent = note.title;
+            document.getElementById('detailTags').innerHTML = note.tags.map(tag => 
+                `<span class="tag">#${tag}</span>`
+            ).join('');
+            document.getElementById('detailContent').innerHTML = note.fullContent;
+
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('note-detail-view').classList.add('active');
+        }
+
+        // Handle search
+        function handleSearch(event) {
+            const query = event.target.value.toLowerCase().trim();
+            
+            if (!query) {
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="no-results">
+                        <p>🔍 Type in the search bar to find notes</p>
+                        <p style="margin-top: 8px; font-size: 14px;">Try: "machine learning", "python", "productivity"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const results = demoNotes.filter(note => 
+                note.title.toLowerCase().includes(query) ||
+                note.content.toLowerCase().includes(query) ||
+                note.tags.some(tag => tag.toLowerCase().includes(query))
+            );
+
+            if (results.length === 0) {
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="no-results">
+                        <p>No results found for "${query}"</p>
+                        <p style="margin-top: 8px; font-size: 14px;">Try different keywords</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('searchResults').innerHTML = results.map(note => `
+                    <div class="search-result-item" onclick="showNoteDetail(${note.id})">
+                        <div class="result-title">${note.title}</div>
+                        <div class="result-excerpt">${note.content}</div>
+                        <div class="note-tags" style="margin-top: 12px;">
+                            ${note.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Filter by tag
+        function filterByTag(tag) {
+            filteredNotes = demoNotes.filter(note => 
+                note.tags.some(t => t.toLowerCase() === tag.toLowerCase())
+            );
+            showView('notes');
+            renderNotes();
+        }
+
+        // Show create note (placeholder)
+        function showCreateNote() {
+            alert('🎮 Demo Mode: Note creation is available in the full version!\n\nSign up for beta access to get the complete experience.');
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Octopus SecondBrain - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #F59E0B;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Demo Banner */
+        .demo-banner {
+            background: linear-gradient(135deg, var(--accent) 0%, #ef4444 100%);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .demo-banner-text {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .demo-banner-icon {
+            font-size: 2rem;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Notes View */
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 500px;
+            margin-right: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Tag Filter */
+        .tag-filter {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .tag {
+            padding: 0.5rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tag:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .tag.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Notes Grid */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .note-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .note-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+
+        .note-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .note-preview {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .note-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .note-tag {
+            padding: 0.25rem 0.75rem;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--primary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .close-btn:hover {
+            color: var(--text);
+        }
+
+        .note-content {
+            line-height: 1.8;
+            color: var(--text);
+        }
+
+        .note-content h1 {
+            font-size: 1.5rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .note-content h2 {
+            font-size: 1.25rem;
+            margin: 1.25rem 0 0.75rem;
+        }
+
+        .note-content ul, .note-content ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        .note-content li {
+            margin: 0.5rem 0;
+        }
+
+        .note-content p {
+            margin: 0.75rem 0;
+        }
+
+        .note-content strong {
+            color: var(--primary);
+        }
+
+        /* Search Results */
+        .search-results {
+            margin-top: 2rem;
+        }
+
+        .search-results-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Neural Map View */
+        .map-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .map-placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .notes-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .search-bar {
+                max-width: 100%;
+                margin-right: 0;
+            }
+
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-tabs {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .note-card {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            🐙 <span>Octopus SecondBrain</span>
+        </div>
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showView('notes')">📝 Notes</button>
+            <button class="nav-tab" onclick="showView('map')">🧠 Neural Map</button>
+            <button class="nav-tab" onclick="showView('search')">🔍 Search</button>
+            <button class="nav-tab" onclick="showView('stats')">📊 Stats</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Demo Banner -->
+        <div class="demo-banner">
+            <div class="demo-banner-text">
+                <div class="demo-banner-icon">🎮</div>
+                <div>
+                    <strong>Interactive Demo Mode</strong><br>
+                    <small>Playing with 17 preloaded AI/ML notes. All features work locally!</small>
+                </div>
+            </div>
+            <a href="https://forms.gle/wz51dsAm3vmePibr6" target="_blank" class="btn btn-primary">Join Beta</a>
+        </div>
+
+        <!-- Notes View -->
+        <div id="notes-view" class="view active">
+            <div class="notes-header">
+                <div class="search-bar">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        placeholder="🔍 Search notes..." 
+                        id="note-search"
+                        oninput="filterNotes()"
+                    >
+                </div>
+                <button class="btn btn-primary" onclick="showRandomNote()">🎲 Random Note</button>
+            </div>
+
+            <!-- Tag Filter -->
+            <div class="tag-filter" id="tag-filter"></div>
+
+            <!-- Notes Grid -->
+            <div class="notes-grid" id="notes-grid"></div>
+        </div>
+
+        <!-- Neural Map View -->
+        <div id="map-view" class="view">
+            <h2 style="margin-bottom: 1.5rem;">🧠 Neural Map</h2>
+            <div class="map-container">
+                <div class="map-placeholder">
+                    <div class="map-placeholder-icon">🕸️</div>
+                    <h3>Interactive 3D Neural Map</h3>
+                    <p style="margin-top: 0.5rem;">Visualize connections between your notes</p>
+                    <p style="margin-top: 1rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+                        In the full version, this shows a 3D force-directed graph where notes are nodes 
+                        and connections are edges. Related notes cluster together based on semantic similarity.
+                    </p>
+                    <button class="btn btn-primary" style="margin-top: 2rem;" onclick="showView('notes')">
+                        View Notes Instead
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search View -->
+        <div id="search-view" class="view">
+            <h2 style="margin-bottom: 1.5rem;">🔍 Semantic Search</h2>
+            <div class="search-bar" style="max-width: 100%; margin-bottom: 2rem;">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    placeholder="Search by meaning... (e.g., 'neural networks', 'productivity tips')" 
+                    id="semantic-search"
+                    oninput="semanticSearch()"
+                >
+            </div>
+            <div id="search-results" class="notes-grid"></div>
+        </div>
+
+        <!-- Stats View -->
+        <div id="stats-view" class="view">
+            <h2 style="margin-bottom: 1.5rem;">📊 Your Knowledge Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-notes">17</div>
+                    <div class="stat-label">Total Notes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-tags">40+</div>
+                    <div class="stat-label">Unique Tags</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Demo Progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Connections</div>
+                </div>
+            </div>
+
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem;">📈 Tag Distribution</h3>
+                <div id="tag-distribution"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="note-modal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="modal-title"></div>
+                    <div class="note-tags" id="modal-tags" style="margin-top: 1rem;"></div>
+                </div>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="note-content" id="modal-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // Demo notes data (from your bulk import)
+        const demoNotes = [
+            {
+                id: 1,
+                title: "Welcome to Your Second Brain! 🧠",
+                content: `<h1>Welcome to Octopus SecondBrain!</h1><p>This is your personal knowledge management system powered by AI. Here's what makes it special:</p><h2>Key Features</h2><ul><li><strong>Neural Map</strong>: Visualize connections between your notes in 3D</li><li><strong>Semantic Search</strong>: Find notes by meaning, not just keywords</li><li><strong>Auto-Linking</strong>: Automatically discover relationships</li><li><strong>Smart Tags</strong>: Organize with #productivity #learning</li></ul><h2>Quick Start</h2><ol><li>Create notes about anything</li><li>Add tags using #hashtag format</li><li>Visit the Neural Map to see connections</li><li>Use semantic search to find related ideas</li></ol><p>The more notes you create, the more powerful your second brain becomes!</p>`,
+                tags: ["welcome", "tutorial", "getting-started"]
+            },
+            {
+                id: 2,
+                title: "Machine Learning Fundamentals",
+                content: `<h1>Machine Learning Basics</h1><p>Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed.</p><h2>Types of ML</h2><ol><li><strong>Supervised Learning</strong>: Learning from labeled data (classification, regression)</li><li><strong>Unsupervised Learning</strong>: Finding patterns in unlabeled data (clustering, dimensionality reduction)</li><li><strong>Reinforcement Learning</strong>: Learning through trial and error with rewards</li></ol><h2>Key Concepts</h2><ul><li>Training data vs test data</li><li>Overfitting and underfitting</li><li>Feature engineering</li><li>Model evaluation metrics</li></ul><p>Machine learning powers many modern applications like recommendation systems, image recognition, and natural language processing.</p>`,
+                tags: ["machine-learning", "AI", "data-science", "programming"]
+            },
+            {
+                id: 3,
+                title: "Neural Networks Deep Dive",
+                content: `<h1>Neural Networks</h1><p>Neural networks are inspired by the human brain and consist of interconnected nodes (neurons) organized in layers.</p><h2>Architecture</h2><ul><li><strong>Input Layer</strong>: Receives raw data</li><li><strong>Hidden Layers</strong>: Process and transform data</li><li><strong>Output Layer</strong>: Produces final predictions</li></ul><h2>Training Process</h2><ol><li>Forward propagation: Data flows through network</li><li>Loss calculation: Measure error</li><li>Backpropagation: Adjust weights to minimize error</li><li>Repeat until convergence</li></ol><h2>Common Types</h2><ul><li>Feedforward Neural Networks (FNN)</li><li>Convolutional Neural Networks (CNN) - for images</li><li>Recurrent Neural Networks (RNN) - for sequences</li><li>Transformers - for natural language</li></ul><p>Neural networks are the foundation of deep learning and modern AI systems.</p>`,
+                tags: ["neural-networks", "deep-learning", "AI", "machine-learning"]
+            },
+            {
+                id: 4,
+                title: "Python Programming Best Practices",
+                content: `<h1>Python Best Practices</h1><p>Writing clean, maintainable Python code is essential for long-term project success.</p><h2>Code Style</h2><ul><li>Follow PEP 8 style guide</li><li>Use meaningful variable names</li><li>Write docstrings for functions and classes</li><li>Keep functions small and focused</li></ul><h2>Common Patterns</h2><ul><li>List comprehensions for concise code</li><li>Context managers for resource handling</li><li>Generators for memory efficiency</li><li>Type hints for better code documentation</li></ul><h2>Tools</h2><ul><li>black for code formatting</li><li>pylint for linting</li><li>pytest for testing</li><li>mypy for type checking</li></ul><p>Good code is readable code!</p>`,
+                tags: ["python", "programming", "best-practices", "coding"]
+            },
+            {
+                id: 5,
+                title: "Data Science Workflow",
+                content: `<h1>Data Science Project Workflow</h1><p>A typical data science project follows these key stages:</p><h2>1. Problem Definition</h2><ul><li>Understand business objectives</li><li>Define success metrics</li><li>Identify stakeholders</li></ul><h2>2. Data Collection</h2><ul><li>Gather relevant data sources</li><li>Ensure data quality and completeness</li><li>Handle missing values</li></ul><h2>3. Exploratory Data Analysis (EDA)</h2><ul><li>Visualize distributions</li><li>Find correlations</li><li>Identify outliers</li><li>Feature engineering</li></ul><h2>4. Modeling</h2><ul><li>Select appropriate algorithms</li><li>Train/test split</li><li>Cross-validation</li><li>Hyperparameter tuning</li></ul><h2>5. Evaluation & Deployment</h2><ul><li>Assess model performance</li><li>Production environment setup</li><li>Monitoring and maintenance</li></ul><p>This workflow is iterative - you'll often go back and refine earlier stages.</p>`,
+                tags: ["data-science", "workflow", "analytics", "machine-learning"]
+            },
+            {
+                id: 6,
+                title: "Knowledge Graphs and Semantic Networks",
+                content: `<h1>Knowledge Graphs</h1><p>Knowledge graphs represent information as a network of entities and their relationships.</p><h2>Structure</h2><ul><li><strong>Nodes</strong>: Entities (people, places, concepts)</li><li><strong>Edges</strong>: Relationships between entities</li><li><strong>Properties</strong>: Attributes of nodes and edges</li></ul><h2>Applications</h2><ul><li>Google's knowledge panel</li><li>Recommendation systems</li><li>Question answering systems</li><li>Drug discovery</li><li>This SecondBrain app!</li></ul><h2>Building Knowledge Graphs</h2><ol><li>Entity extraction from text</li><li>Relationship identification</li><li>Knowledge fusion</li><li>Graph querying and reasoning</li></ol><p>Knowledge graphs enable machines to understand context and make intelligent connections between disparate pieces of information.</p>`,
+                tags: ["knowledge-graphs", "semantic-networks", "AI", "graph-theory"]
+            },
+            {
+                id: 7,
+                title: "Natural Language Processing (NLP)",
+                content: `<h1>Natural Language Processing</h1><p>NLP enables computers to understand, interpret, and generate human language.</p><h2>Core Tasks</h2><ul><li><strong>Tokenization</strong>: Breaking text into words/sentences</li><li><strong>POS Tagging</strong>: Identifying parts of speech</li><li><strong>Named Entity Recognition</strong>: Extracting names, dates, locations</li><li><strong>Sentiment Analysis</strong>: Determining emotional tone</li><li><strong>Machine Translation</strong>: Converting between languages</li></ul><h2>Modern Approaches</h2><ul><li>Word embeddings (Word2Vec, GloVe)</li><li>Contextualized embeddings (BERT, GPT)</li><li>Transformers architecture</li><li>Large Language Models (LLMs)</li></ul><h2>Applications</h2><ul><li>Chatbots and virtual assistants</li><li>Text summarization</li><li>Information extraction</li><li>Semantic search (like in this app!)</li></ul><p>NLP is revolutionizing how we interact with computers and access information.</p>`,
+                tags: ["NLP", "natural-language-processing", "AI", "machine-learning"]
+            },
+            {
+                id: 8,
+                title: "Vector Embeddings Explained",
+                content: `<h1>Vector Embeddings</h1><p>Embeddings convert discrete data (words, images, etc.) into continuous vector representations.</p><h2>Why Embeddings?</h2><ul><li>Capture semantic meaning</li><li>Enable similarity comparisons</li><li>Reduce dimensionality</li><li>Work well with neural networks</li></ul><h2>Text Embeddings</h2><p>Transform words or sentences into vectors where similar meanings have similar vectors.</p><p><strong>Example:</strong> "king" - "man" + "woman" ≈ "queen"</p><h2>How This App Uses Embeddings</h2><ol><li>Each note is converted to a vector</li><li>Similar notes have similar vectors</li><li>Cosine similarity finds related notes</li><li>Neural map visualizes these connections</li></ol><h2>Popular Models</h2><ul><li>Word2Vec (2013)</li><li>GloVe (2014)</li><li>BERT (2018)</li><li>Sentence Transformers (2019)</li><li>OpenAI Embeddings (2022+)</li></ul><p>Embeddings are the secret sauce behind semantic search!</p>`,
+                tags: ["embeddings", "vectors", "semantic-search", "AI", "NLP"]
+            },
+            {
+                id: 9,
+                title: "Productivity Systems and Note-Taking",
+                content: `<h1>Effective Note-Taking Systems</h1><p>Good note-taking is essential for learning and productivity.</p><h2>Zettelkasten</h2><ul><li>Atomic notes (one idea per note)</li><li>Unique identifiers</li><li>Heavy linking between notes</li><li>Emerged from Niklas Luhmann's slip-box</li></ul><h2>PARA Method</h2><ul><li><strong>Projects</strong>: Active work with deadlines</li><li><strong>Areas</strong>: Ongoing responsibilities</li><li><strong>Resources</strong>: Topics of interest</li><li><strong>Archive</strong>: Inactive items</li></ul><h2>Second Brain (Building a Second Brain)</h2><ol><li>Capture interesting information</li><li>Organize by actionability</li><li>Distill into key insights</li><li>Express through creation</li></ol><h2>Best Practices</h2><ul><li>Write in your own words</li><li>Link related concepts</li><li>Review regularly</li><li>Use consistent tags</li><li>Make notes discoverable</li></ul><p>This SecondBrain app combines the best of these systems!</p>`,
+                tags: ["productivity", "note-taking", "zettelkasten", "knowledge-management", "PKM"]
+            },
+            {
+                id: 10,
+                title: "Graph Databases vs Relational Databases",
+                content: `<h1>Graph vs Relational Databases</h1><h2>Relational Databases (SQL)</h2><ul><li>Tables with rows and columns</li><li>Relationships via foreign keys</li><li>ACID transactions</li><li>Great for structured data</li><li>Examples: PostgreSQL, MySQL</li></ul><p><strong>Use when:</strong></p><ul><li>Data has clear schema</li><li>Need complex queries across tables</li><li>Require strong consistency</li></ul><h2>Graph Databases</h2><ul><li>Nodes and relationships as first-class citizens</li><li>No need for joins</li><li>Traversal-based queries</li><li>Examples: Neo4j, Amazon Neptune</li></ul><p><strong>Use when:</strong></p><ul><li>Data is highly connected</li><li>Need path finding</li><li>Relationships are as important as entities</li><li>Social networks, knowledge graphs</li></ul><h2>Hybrid Approach</h2><p>This SecondBrain app uses:</p><ul><li>SQLite for note storage (relational)</li><li>Vector embeddings for semantic relationships (graph-like)</li><li>Best of both worlds!</li></ul>`,
+                tags: ["databases", "graph-databases", "SQL", "data-modeling", "architecture"]
+            },
+            {
+                id: 11,
+                title: "Project Ideas: AI & Data Science",
+                content: `<h1>Cool AI Project Ideas</h1><h2>Beginner Level</h2><ol><li><strong>Sentiment Analysis Bot</strong>: Analyze Twitter sentiment on topics</li><li><strong>Image Classifier</strong>: Cat vs Dog classifier using CNNs</li><li><strong>Weather Predictor</strong>: Time series forecasting</li><li><strong>Spam Filter</strong>: Email classification</li></ol><h2>Intermediate Level</h2><ol start="5"><li><strong>Recommendation System</strong>: Movie/book recommendations</li><li><strong>Chatbot</strong>: Customer service bot using NLP</li><li><strong>Stock Price Predictor</strong>: LSTM for price forecasting</li><li><strong>Face Recognition</strong>: CNN-based face detection</li></ol><h2>Advanced Level</h2><ol start="9"><li><strong>Question Answering System</strong>: Using transformers</li><li><strong>Style Transfer</strong>: Neural style transfer for images</li><li><strong>Text Summarization</strong>: Extractive/abstractive summarization</li><li><strong>Personal Knowledge Graph</strong>: Like this SecondBrain app!</li></ol><h2>Tips for Success</h2><ul><li>Start with small datasets</li><li>Use pre-trained models when possible</li><li>Focus on solving real problems</li><li>Document your process</li><li>Share on GitHub</li></ul><p>Pick a project that excites you and start building!</p>`,
+                tags: ["projects", "AI", "machine-learning", "data-science", "ideas"]
+            },
+            {
+                id: 12,
+                title: "Learning Resources for AI/ML",
+                content: `<h1>Best Resources for Learning AI & ML</h1><h2>Online Courses</h2><ol><li><strong>Andrew Ng's ML Course</strong> (Coursera) - Classic introduction</li><li><strong>Fast.ai</strong> - Practical deep learning</li><li><strong>DeepLearning.AI</strong> - Specializations in various topics</li><li><strong>MIT OpenCourseWare</strong> - Free university-level courses</li></ol><h2>Books</h2><ul><li>"Hands-On Machine Learning" by Aurélien Géron</li><li>"Deep Learning" by Goodfellow, Bengio, Courville</li><li>"Pattern Recognition and Machine Learning" by Bishop</li><li>"Python for Data Analysis" by Wes McKinney</li></ul><h2>YouTube Channels</h2><ul><li>3Blue1Brown (intuitive explanations)</li><li>StatQuest (statistics)</li><li>Yannic Kilcher (paper reviews)</li><li>Two Minute Papers (latest research)</li></ul><h2>Practice Platforms</h2><ul><li>Kaggle (competitions & datasets)</li><li>LeetCode (coding practice)</li><li>Papers with Code (implementations)</li><li>Hugging Face (models & datasets)</li></ul><h2>Communities</h2><ul><li>r/MachineLearning (Reddit)</li><li>ML Discord servers</li><li>Local meetups</li><li>Twitter #ML community</li></ul><p>Consistent practice is key to mastery!</p>`,
+                tags: ["learning", "resources", "AI", "machine-learning", "education"]
+            },
+            {
+                id: 13,
+                title: "Web Development Stack 2025",
+                content: `<h1>Modern Web Development</h1><h2>Frontend</h2><ul><li><strong>React/Vue/Svelte</strong>: UI frameworks</li><li><strong>Next.js/Nuxt</strong>: Full-stack frameworks</li><li><strong>TailwindCSS</strong>: Utility-first styling</li><li><strong>TypeScript</strong>: Type safety</li></ul><h2>Backend</h2><ul><li><strong>Node.js/Deno</strong>: JavaScript runtime</li><li><strong>FastAPI/Django</strong>: Python frameworks</li><li><strong>GraphQL/REST</strong>: API design</li><li><strong>PostgreSQL/MongoDB</strong>: Databases</li></ul><h2>DevOps</h2><ul><li><strong>Docker</strong>: Containerization</li><li><strong>Kubernetes</strong>: Orchestration</li><li><strong>GitHub Actions</strong>: CI/CD</li><li><strong>Vercel/Netlify</strong>: Hosting</li></ul><h2>This SecondBrain App Stack</h2><ul><li>Frontend: React + Vite + TailwindCSS</li><li>Backend: FastAPI (Python)</li><li>Database: SQLite + ChromaDB (vectors)</li><li>Deployment: Docker + Render</li></ul><p>Modern web dev is about choosing the right tools for your needs!</p>`,
+                tags: ["web-development", "programming", "full-stack", "technology"]
+            },
+            {
+                id: 14,
+                title: "Time Management Techniques",
+                content: `<h1>Effective Time Management</h1><h2>Pomodoro Technique</h2><ul><li>Work for 25 minutes</li><li>Take 5-minute break</li><li>After 4 pomodoros, take 15-30 minute break</li><li>Maintains focus and prevents burnout</li></ul><h2>Time Blocking</h2><ul><li>Schedule specific time slots for tasks</li><li>Batch similar activities</li><li>Include buffer time</li><li>Protect deep work time</li></ul><h2>Eisenhower Matrix</h2><p>Prioritize tasks by urgency and importance:</p><ol><li><strong>Urgent + Important</strong>: Do first</li><li><strong>Important + Not Urgent</strong>: Schedule</li><li><strong>Urgent + Not Important</strong>: Delegate</li><li><strong>Neither</strong>: Eliminate</li></ol><h2>GTD (Getting Things Done)</h2><ol><li>Capture everything</li><li>Clarify what it means</li><li>Organize by category</li><li>Reflect regularly</li><li>Engage with tasks</li></ol><h2>Tips</h2><ul><li>Start with your MIT (Most Important Task)</li><li>Minimize context switching</li><li>Track your time for a week</li><li>Learn to say no</li></ul><p>Time is your most valuable resource!</p>`,
+                tags: ["productivity", "time-management", "getting-things-done", "focus"]
+            },
+            {
+                id: 15,
+                title: "Docker Containerization Basics",
+                content: `<h1>Docker Essentials</h1><p>Docker packages applications into containers - lightweight, portable, and consistent environments.</p><h2>Core Concepts</h2><ul><li><strong>Image</strong>: Blueprint for containers</li><li><strong>Container</strong>: Running instance of an image</li><li><strong>Dockerfile</strong>: Instructions to build an image</li><li><strong>Docker Compose</strong>: Multi-container orchestration</li></ul><h2>Basic Commands</h2><ul><li>Build image: <code>docker build -t myapp</code></li><li>Run container: <code>docker run -p 8000:8000 myapp</code></li><li>List containers: <code>docker ps</code></li><li>Stop container: <code>docker stop container_id</code></li><li>Remove container: <code>docker rm container_id</code></li></ul><h2>Benefits</h2><ul><li>Consistent development environments</li><li>Easy deployment</li><li>Isolation from host system</li><li>Reproducible builds</li><li>Microservices architecture</li></ul><h2>This App's Docker Setup</h2><ul><li>Backend container (FastAPI)</li><li>Frontend container (Nginx + React)</li><li>Database volume for persistence</li><li>Docker Compose for orchestration</li></ul><p>Containerization is essential for modern deployment!</p>`,
+                tags: ["docker", "devops", "containerization", "deployment", "infrastructure"]
+            },
+            {
+                id: 16,
+                title: "API Design Best Practices",
+                content: `<h1>RESTful API Design</h1><h2>Principles</h2><h3>1. Use HTTP Methods Correctly</h3><ul><li>GET: Retrieve data</li><li>POST: Create new resource</li><li>PUT/PATCH: Update resource</li><li>DELETE: Remove resource</li></ul><h3>2. Logical Resource URLs</h3><ul><li>/api/users (collection)</li><li>/api/users/123 (specific resource)</li><li>/api/users/123/posts (nested resources)</li></ul><h3>3. Status Codes</h3><ul><li>200: Success</li><li>201: Created</li><li>400: Bad request</li><li>401: Unauthorized</li><li>404: Not found</li><li>500: Server error</li></ul><h3>4. Versioning</h3><ul><li>/api/v1/users</li><li>Header-based versioning</li><li>Query parameter versioning</li></ul><h2>Security</h2><ul><li>HTTPS always</li><li>Authentication (JWT, OAuth)</li><li>Rate limiting</li><li>Input validation</li><li>CORS configuration</li></ul><h2>Documentation</h2><ul><li>OpenAPI/Swagger</li><li>Clear examples</li><li>Error responses</li><li>Authentication requirements</li></ul><p>Good API design makes integration seamless!</p>`,
+                tags: ["API", "REST", "web-development", "backend", "architecture"]
+            },
+            {
+                id: 17,
+                title: "Transformers and Attention Mechanism",
+                content: `<h1>Transformers Architecture</h1><p>Transformers revolutionized NLP with the "Attention is All You Need" paper in 2017.</p><h2>Key Innovation: Self-Attention</h2><p>Unlike RNNs that process sequentially, transformers process all tokens in parallel using attention mechanisms.</p><h2>Components</h2><ul><li><strong>Multi-Head Attention</strong>: Allows model to focus on different parts of the input</li><li><strong>Positional Encoding</strong>: Adds sequence order information</li><li><strong>Feed-Forward Networks</strong>: Process each position independently</li><li><strong>Layer Normalization</strong>: Stabilizes training</li></ul><h2>Advantages</h2><ul><li>Parallelizable (faster training)</li><li>Better at capturing long-range dependencies</li><li>State-of-the-art results across NLP tasks</li></ul><h2>Popular Transformer Models</h2><ul><li><strong>BERT</strong>: Bidirectional, great for understanding</li><li><strong>GPT</strong>: Autoregressive, excellent for generation</li><li><strong>T5</strong>: Text-to-text framework</li><li><strong>BART</strong>: Combines best of BERT and GPT</li></ul><p>Transformers power ChatGPT, Google Search, and this demo app's semantic search!</p>`,
+                tags: ["transformers", "attention", "deep-learning", "NLP", "AI"]
+            }
+        ];
+
+        let currentView = 'notes';
+        let filteredNotes = [...demoNotes];
+        let selectedTag = null;
+
+        // Initialize
+        function init() {
+            renderNotes();
+            renderTagFilter();
+            renderTagDistribution();
+        }
+
+        // View switching
+        function showView(view) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(`${view}-view`).classList.add('active');
+            document.querySelector(`[onclick="showView('${view}')"]`).classList.add('active');
+            
+            currentView = view;
+        }
+
+        // Render notes
+        function renderNotes(notes = filteredNotes) {
+            const grid = document.getElementById('notes-grid');
+            grid.innerHTML = notes.map(note => `
+                <div class="note-card" onclick="openNote(${note.id})">
+                    <div class="note-title">${note.title}</div>
+                    <div class="note-preview">${stripHtml(note.content).substring(0, 150)}...</div>
+                    <div class="note-tags">
+                        ${note.tags.map(tag => `<span class="note-tag">#${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render tag filter
+        function renderTagFilter() {
+            const allTags = [...new Set(demoNotes.flatMap(note => note.tags))].sort();
+            const filter = document.getElementById('tag-filter');
+            filter.innerHTML = `
+                <div class="tag ${!selectedTag ? 'active' : ''}" onclick="filterByTag(null)">All</div>
+                ${allTags.map(tag => `
+                    <div class="tag ${selectedTag === tag ? 'active' : ''}" onclick="filterByTag('${tag}')">#${tag}</div>
+                `).join('')}
+            `;
+        }
+
+        // Filter by tag
+        function filterByTag(tag) {
+            selectedTag = tag;
+            if (tag) {
+                filteredNotes = demoNotes.filter(note => note.tags.includes(tag));
+            } else {
+                filteredNotes = [...demoNotes];
+            }
+            renderNotes();
+            renderTagFilter();
+        }
+
+        // Filter notes by search
+        function filterNotes() {
+            const query = document.getElementById('note-search').value.toLowerCase();
+            if (!query) {
+                filteredNotes = selectedTag 
+                    ? demoNotes.filter(note => note.tags.includes(selectedTag))
+                    : [...demoNotes];
+            } else {
+                filteredNotes = demoNotes.filter(note => 
+                    note.title.toLowerCase().includes(query) || 
+                    stripHtml(note.content).toLowerCase().includes(query) ||
+                    note.tags.some(tag => tag.toLowerCase().includes(query))
+                );
+            }
+            renderNotes();
+        }
+
+        // Semantic search (simulated with keyword matching)
+        function semanticSearch() {
+            const query = document.getElementById('semantic-search').value.toLowerCase();
+            const resultsContainer = document.getElementById('search-results');
+            
+            if (!query) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+
+            // Simulate semantic search with keyword + tag matching
+            const results = demoNotes.map(note => {
+                let score = 0;
+                const text = (note.title + ' ' + stripHtml(note.content)).toLowerCase();
+                
+                // Keyword matching
+                query.split(' ').forEach(word => {
+                    if (text.includes(word)) score += 2;
+                    if (note.tags.some(tag => tag.includes(word))) score += 3;
+                });
+                
+                return { ...note, score };
+            }).filter(note => note.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 6);
+
+            if (results.length > 0) {
+                renderNotes(results);
+            } else {
+                resultsContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No results found. Try different keywords!</p>';
+            }
+        }
+
+        // Open note modal
+        function openNote(id) {
+            const note = demoNotes.find(n => n.id === id);
+            if (!note) return;
+
+            document.getElementById('modal-title').textContent = note.title;
+            document.getElementById('modal-content').innerHTML = note.content;
+            document.getElementById('modal-tags').innerHTML = note.tags.map(tag => 
+                `<span class="note-tag">#${tag}</span>`
+            ).join('');
+            
+            document.getElementById('note-modal').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal(event) {
+            if (!event || event.target.id === 'note-modal') {
+                document.getElementById('note-modal').classList.remove('active');
+            }
+        }
+
+        // Show random note
+        function showRandomNote() {
+            const randomNote = demoNotes[Math.floor(Math.random() * demoNotes.length)];
+            openNote(randomNote.id);
+        }
+
+        // Render tag distribution
+        function renderTagDistribution() {
+            const tagCounts = {};
+            demoNotes.forEach(note => {
+                note.tags.forEach(tag => {
+                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                });
+            });
+
+            const sorted = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const maxCount = Math.max(...sorted.map(([_, count]) => count));
+
+            const container = document.getElementById('tag-distribution');
+            container.innerHTML = sorted.map(([tag, count]) => `
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>#${tag}</span>
+                        <span>${count} notes</span>
+                    </div>
+                    <div style="background: var(--border); border-radius: 4px; height: 8px; overflow: hidden;">
+                        <div style="background: var(--primary); height: 100%; width: ${(count / maxCount) * 100}%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Helper to strip HTML
+        function stripHtml(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || '';
+        }
+
+        // Initialize on load
+        init();
+
+        // Close modal on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>

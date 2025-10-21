@@ -185,9 +185,12 @@ const AppRoutes = () => {
 }
 
 function App() {
+  // Get base path from Vite config (set via import.meta.env.BASE_URL)
+  const basename = import.meta.env.BASE_URL || '/'
+  
   return (
     <ThemeProvider>
-      <Router>
+      <Router basename={basename}>
         <div className="neural-bg" />
         <Toaster
           position="top-right"

@@ -6,6 +6,14 @@ const getApiUrl = () => {
   const viteApiUrl = import.meta.env.VITE_API_URL
   const isDevelopment = import.meta.env.DEV
   
+  // Check if we're in demo mode
+  const demoMode = typeof window !== 'undefined' && localStorage.getItem('demoMode') === 'true'
+  
+  // In demo mode, return a placeholder URL (won't be used)
+  if (demoMode) {
+    return 'http://demo.local/api'
+  }
+  
   // Always require VITE_API_URL to be explicitly set
   if (!viteApiUrl) {
     const errorMsg = isDevelopment 
@@ -56,6 +64,16 @@ export const onUnauthorized = (listener) => {
 // Request interceptor
 api.interceptors.request.use(
   config => {
+    // In demo mode, block API calls
+    const demoMode = typeof window !== 'undefined' && localStorage.getItem('demoMode') === 'true'
+    if (demoMode) {
+      // Return a rejected promise with a demo mode flag
+      return Promise.reject({ 
+        isDemoMode: true, 
+        message: 'Demo mode - API calls are disabled',
+        config 
+      })
+    }
     return config
   },
   error => {

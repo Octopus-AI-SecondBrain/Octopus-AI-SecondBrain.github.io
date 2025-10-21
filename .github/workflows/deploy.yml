@@ -40,8 +40,11 @@ jobs:
         npm run build
       env:
         NODE_ENV: production
+        # Base path for GitHub Pages subdirectory
+        VITE_BASE_PATH: /app/
         # Update this URL when you deploy backend to Render.com
-        VITE_API_URL: https://secondbrain-api.onrender.com/api
+        # For now, using placeholder - app will work in demo mode
+        VITE_API_URL: https://octopus-ai-secondbrain.github.io/api
         
     - name: Prepare GitHub Pages content
       run: |
