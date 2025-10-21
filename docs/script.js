@@ -1,52 +1,5 @@
-// Demo Modal functionality
-const demoModal = document.getElementById('demoModal');
-const tryDemoBtn = document.getElementById('tryDemoBtn');
-const tryDemoBtn2 = document.getElementById('tryDemoBtn2');
-const modalCloseBtn = document.querySelector('.modal-close');
-const modalCloseBtnFooter = document.querySelector('.modal-close-btn');
-
-// Open modal
-function openDemoModal(e) {
-    e.preventDefault();
-    demoModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-// Close modal
-function closeDemoModal() {
-    demoModal.classList.remove('active');
-    document.body.style.overflow = 'auto';
-}
-
-if (tryDemoBtn) {
-    tryDemoBtn.addEventListener('click', openDemoModal);
-}
-
-if (tryDemoBtn2) {
-    tryDemoBtn2.addEventListener('click', openDemoModal);
-}
-
-if (modalCloseBtn) {
-    modalCloseBtn.addEventListener('click', closeDemoModal);
-}
-
-if (modalCloseBtnFooter) {
-    modalCloseBtnFooter.addEventListener('click', closeDemoModal);
-}
-
-// Close modal on background click
-demoModal.addEventListener('click', (e) => {
-    if (e.target === demoModal) {
-        closeDemoModal();
-    }
-});
-
-// Close modal on Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && demoModal.classList.contains('active')) {
-        closeDemoModal();
-    }
-});
+// Demo redirect (demo.html handles this now)
+// Users click "Try Demo" button → goes to demo.html → loads demo data → redirects to app
 
 // Smooth scrolling for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
