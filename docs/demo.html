@@ -322,10 +322,26 @@
 
             localStorage.setItem('demoNotes', JSON.stringify(notesWithIds));
 
-            // Simulate loading
+            // Show success message
             setTimeout(() => {
-                // Redirect to app
-                window.location.href = './app/index.html';
+                document.getElementById('loading').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+                        <h2 style="color: #10B981; margin-bottom: 10px;">Demo Ready!</h2>
+                        <p style="color: #6B7280; margin-bottom: 30px;">10 sample notes loaded. Full app coming soon!</p>
+                        <p style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 20px; color: #92400E;">
+                            <strong>📱 Note:</strong> The full React app is being deployed. For now, your demo data is saved in browser storage.<br><br>
+                            <strong>What you can do:</strong><br>
+                            • View the 10 pre-loaded notes in localStorage<br>
+                            • Come back when the app is fully deployed!<br>
+                            • Or <a href="https://forms.gle/wz51dsAm3vmePibr6" style="color: #7C3AED; text-decoration: underline;">join our beta</a> to get notified
+                        </p>
+                        <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                            <a href="/" class="btn btn-primary">Back to Home</a>
+                            <a href="https://forms.gle/wz51dsAm3vmePibr6" target="_blank" class="btn btn-secondary">Join Beta Waitlist</a>
+                        </div>
+                    </div>
+                `;
             }, 1500);
         }
     </script>
