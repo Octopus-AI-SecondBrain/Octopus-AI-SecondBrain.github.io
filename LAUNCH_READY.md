@@ -10,7 +10,14 @@ Everything is now pushed to GitHub and ready for deployment!
 - ✅ You'll receive email notifications for each signup
 - ✅ Super simple - no backend code needed!
 
-### 2. Landing Page
+### 2. Standalone Demo (NO BACKEND NEEDED!)
+- ✅ **New demo.html page** that pre-loads 10 sample notes
+- ✅ Users can try the full app without sign-up
+- ✅ All data stored in browser localStorage
+- ✅ Perfect for "Try Demo" button - works instantly!
+- ✅ Demo URL: `https://octopus-ai-secondbrain.github.io/demo.html`
+
+### 3. Landing Page
 - ✅ Professional hero section with animated neural map
 - ✅ Features showcase (6 cards)
 - ✅ Demo section (ready for video)
@@ -116,8 +123,8 @@ See DEPLOYMENT_GUIDE.md for detailed steps:
 ### Landing Page (octopus-ai-secondbrain.github.io)
 1. **Hero Section**
    - Animated neural map visualization
-   - "Try Demo" and "Join Beta" buttons
-   - Eye-catching gradient text
+   - "Try Demo" button → Goes to demo.html (pre-loaded notes, no backend!)
+   - "Join Beta" button → Opens Google Form
 
 2. **Features Section**
    - 6 feature cards (AI search, 3D map, auto-linking, bulk import, tags, performance)
