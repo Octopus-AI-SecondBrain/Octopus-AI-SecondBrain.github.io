@@ -6,12 +6,17 @@ This folder contains the landing page for Second Brain, deployed via GitHub Page
 
 ```
 docs/
-├── index.html          # Landing page HTML
-├── styles.css          # Complete styling with animations
-├── script.js           # Form handling, modal, smooth scrolling
-├── .nojekyll          # Bypass Jekyll processing (auto-generated)
-├── 404.html           # Redirect to landing page (auto-generated)
-└── app/               # Built React app (auto-generated)
+├── index.html              # Landing page HTML
+├── demo.html               # Simple app demo
+├── demo-app.html           # Complete app demo with notes
+├── demo-neural-map.html    # 🆕 Full 3D/2D Neural Map demo
+├── styles.css              # Complete styling with animations
+├── script.js               # Form handling, modal, smooth scrolling
+├── demo_notes.js           # Demo notes data
+├── NEURAL_MAP_DEMO.md      # 🆕 Neural Map documentation
+├── .nojekyll              # Bypass Jekyll processing (auto-generated)
+├── 404.html               # Redirect to landing page (auto-generated)
+└── app/                   # Built React app (auto-generated)
     └── index.html
     └── assets/
 ```
@@ -20,8 +25,33 @@ docs/
 
 ### Hero Section
 - Animated neural map visualization (pure CSS/SVG)
-- Call-to-action buttons: "Try Demo" and "Join Beta"
+- Call-to-action buttons: 
+  - **"🧠 Try 3D Neural Map"** (New!) - Full interactive visualization
+  - **"📝 Try App Demo"** - Complete app experience
+  - **"Join Beta"** - Sign up for early access
 - Stats display: 10K+ notes, 500+ users, 99.9% uptime
+
+### Demo Pages
+
+#### 1. **demo-neural-map.html** 🆕 (New!)
+Full-featured 3D/2D Neural Map visualization:
+- Real 3D graphics with Three.js
+- Interactive node manipulation
+- Multiple layout algorithms (Force, Radial, Tree)
+- Color-coded nodes by connection strength
+- Smooth animations and transitions
+- Detailed node information panels
+- Live demo: [View Neural Map](https://octopus-ai-secondbrain.github.io/demo-neural-map.html)
+
+#### 2. **demo-app.html**
+Complete app interface with:
+- Notes management (view, search, filter)
+- Simplified neural map
+- Dashboard with stats
+- Tag cloud
+
+#### 3. **demo.html**
+Simple landing page demo
 
 ### Features Grid
 6 feature cards highlighting:
