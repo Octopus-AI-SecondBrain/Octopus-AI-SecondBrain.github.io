@@ -43,6 +43,23 @@ export default function NotesPage() {
 
   const fetchNotes = async (tag = null) => {
     try {
+      // Check for demo mode
+      const demoMode = localStorage.getItem('demoMode') === 'true'
+      const demoNotes = localStorage.getItem('demoNotes')
+      
+      if (demoMode && demoNotes) {
+        let notes = JSON.parse(demoNotes)
+        
+        // Filter by tag if provided
+        if (tag) {
+          notes = notes.filter(note => note.tags && note.tags.includes(tag))
+        }
+        
+        setNotes(notes)
+        setLoading(false)
+        return
+      }
+      
       const params = tag ? { tag } : {}
       const response = await api.get('/notes/', { params })
       setNotes(response.data)
@@ -55,6 +72,17 @@ export default function NotesPage() {
 
   const fetchAllTags = async () => {
     try {
+      // Check for demo mode
+      const demoMode = localStorage.getItem('demoMode') === 'true'
+      const demoNotes = localStorage.getItem('demoNotes')
+      
+      if (demoMode && demoNotes) {
+        const notes = JSON.parse(demoNotes)
+        const tags = [...new Set(notes.flatMap(note => note.tags || []))]
+        setAllTags(tags)
+        return
+      }
+      
       const response = await api.get('/notes/tags/all')
       setAllTags(response.data)
     } catch (error) {

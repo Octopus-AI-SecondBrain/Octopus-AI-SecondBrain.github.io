@@ -182,9 +182,9 @@
         <div class="demo-notice">
             <h3>📝 Demo Mode</h3>
             <ul>
-                <li>Pre-loaded with 15 sample notes about AI/ML</li>
+                <li>Pre-loaded with 10 sample notes about AI/ML</li>
                 <li>All data stored locally in your browser</li>
-                <li>Full app features available</li>
+                <li>Demo launcher ready to try</li>
                 <li>No sign-up required</li>
             </ul>
         </div>
@@ -303,13 +303,15 @@
             // Set demo mode flag
             localStorage.setItem('demoMode', 'true');
 
-            // Create demo user
+            // Create demo user with auth token
             const demoUser = {
                 id: 1,
                 email: 'demo@secondbrain.app',
                 username: 'Demo User'
             };
             localStorage.setItem('demoUser', JSON.stringify(demoUser));
+            localStorage.setItem('token', 'demo-token');
+            localStorage.setItem('user', JSON.stringify(demoUser));
 
             // Store demo notes
             const notesWithIds = demoNotes.map((note, index) => ({
@@ -322,26 +324,41 @@
 
             localStorage.setItem('demoNotes', JSON.stringify(notesWithIds));
 
-            // Show success message
+            // Try to redirect to app, or show message if not deployed
             setTimeout(() => {
-                document.getElementById('loading').innerHTML = `
-                    <div style="text-align: center; padding: 40px;">
-                        <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
-                        <h2 style="color: #10B981; margin-bottom: 10px;">Demo Ready!</h2>
-                        <p style="color: #6B7280; margin-bottom: 30px;">10 sample notes loaded. Full app coming soon!</p>
-                        <p style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 20px; color: #92400E;">
-                            <strong>📱 Note:</strong> The full React app is being deployed. For now, your demo data is saved in browser storage.<br><br>
-                            <strong>What you can do:</strong><br>
-                            • View the 10 pre-loaded notes in localStorage<br>
-                            • Come back when the app is fully deployed!<br>
-                            • Or <a href="https://forms.gle/wz51dsAm3vmePibr6" style="color: #7C3AED; text-decoration: underline;">join our beta</a> to get notified
-                        </p>
-                        <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                            <a href="/" class="btn btn-primary">Back to Home</a>
-                            <a href="https://forms.gle/wz51dsAm3vmePibr6" target="_blank" class="btn btn-secondary">Join Beta Waitlist</a>
-                        </div>
-                    </div>
-                `;
+                // Check if app exists
+                fetch('./app/index.html')
+                    .then(response => {
+                        if (response.ok) {
+                            // App exists! Redirect
+                            window.location.href = './app/';
+                        } else {
+                            throw new Error('App not deployed yet');
+                        }
+                    })
+                    .catch(() => {
+                        // App doesn't exist yet - show message
+                        document.getElementById('loading').innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <div style="font-size: 60px; margin-bottom: 20px;">⏳</div>
+                                <h2 style="color: #F59E0B; margin-bottom: 10px;">App Deploying...</h2>
+                                <p style="color: #6B7280; margin-bottom: 30px;">Demo data saved! The full app is being deployed via GitHub Actions.</p>
+                                <p style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 20px; color: #92400E; text-align: left;">
+                                    <strong>� What's happening:</strong><br><br>
+                                    • GitHub Actions is building the React app<br>
+                                    • It will be available at <code>/app/</code> soon<br>
+                                    • Your 10 demo notes are already saved in localStorage<br>
+                                    • Come back in a few minutes!<br><br>
+                                    <strong>Or:</strong> <a href="https://forms.gle/wz51dsAm3vmePibr6" style="color: #7C3AED; text-decoration: underline;">Join our beta</a> to get notified when it's live
+                                </p>
+                                <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                                    <a href="/" class="btn btn-primary">Back to Home</a>
+                                    <button class="btn btn-secondary" onclick="location.reload()">Try Again</button>
+                                    <a href="https://forms.gle/wz51dsAm3vmePibr6" target="_blank" class="btn btn-secondary">Join Beta</a>
+                                </div>
+                            </div>
+                        `;
+                    });
             }, 1500);
         }
     </script>

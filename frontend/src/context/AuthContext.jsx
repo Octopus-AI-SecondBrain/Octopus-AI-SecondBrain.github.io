@@ -15,6 +15,20 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = useCallback(async () => {
     try {
       setLoading(true)
+      
+      // Check for demo mode
+      const demoMode = localStorage.getItem('demoMode') === 'true'
+      const demoUser = localStorage.getItem('demoUser')
+      
+      if (demoMode && demoUser) {
+        const user = JSON.parse(demoUser)
+        setUser(user)
+        setIsAuthenticated(true)
+        setInitialized(true)
+        setLoading(false)
+        return { success: true, user, demoMode: true }
+      }
+      
       const response = await api.get('/auth/me')
       setUser(response.data)
       setIsAuthenticated(true)
