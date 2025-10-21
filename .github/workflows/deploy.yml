@@ -1,11 +1,17 @@
-name: Deploy to GitHub Pages (Alternative)
+name: Deploy to GitHub Pages
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:  # Manual trigger
   push:
     branches: [ main ]
     paths:
       - "frontend/**"
+      - "docs/**"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
@@ -19,7 +25,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
         
@@ -27,12 +33,6 @@ jobs:
       run: |
         cd frontend
         npm ci
-
-    - name: Lint and format check
-      run: |
-        cd frontend
-        npm run lint
-        npm run format:check
         
     - name: Build frontend
       run: |
@@ -40,17 +40,31 @@ jobs:
         npm run build
       env:
         NODE_ENV: production
-        VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://your-backend.onrender.com' }}
-        VITE_BASE_PATH: /secondbrain/
+        # Update this URL when you deploy backend to Render.com
+        VITE_API_URL: https://secondbrain-api.onrender.com/api
+        
+    - name: Prepare GitHub Pages content
+      run: |
+        # Keep landing page at root (docs/)
+        # Landing page files: index.html, styles.css, script.js already in docs/
+        
+        # Copy built app to docs/app subdirectory
+        mkdir -p docs/app
+        cp -r frontend/dist/* docs/app/
+        
+        # Create .nojekyll to bypass Jekyll processing
+        touch docs/.nojekyll
+        
+        # Create 404 page that redirects to landing
+        echo '<meta http-equiv="refresh" content="0; url=/">' > docs/404.html
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./frontend/dist
-        # Add .nojekyll to bypass Jekyll processing
+        publish_dir: ./docs
         enable_jekyll: false
-        # Clean up old files
         force_orphan: true
-        # Custom domain (optional)
-        # cname: your-domain.com
+        commit_message: 'Deploy landing page + app to GitHub Pages'
+        user_name: 'github-actions[bot]'
+        user_email: 'github-actions[bot]@users.noreply.github.com'

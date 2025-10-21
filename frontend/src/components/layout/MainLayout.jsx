@@ -1,10 +1,14 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
+import HealthIndicator from '../HealthIndicator'
 
 export default function MainLayout() {
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
+    <div 
+      className="flex h-screen"
+      style={{ background: 'var(--sb-bg-primary)' }}
+    >
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar />
@@ -12,6 +16,7 @@ export default function MainLayout() {
           <Outlet />
         </main>
       </div>
+      <HealthIndicator />
     </div>
   )
 }

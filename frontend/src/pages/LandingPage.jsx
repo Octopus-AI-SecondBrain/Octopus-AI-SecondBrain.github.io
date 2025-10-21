@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Brain, Zap, Network, Shield, Search, Globe } from 'lucide-react'
+import { Brain, Zap, Network, Shield, Search, Globe, Moon, Sun } from 'lucide-react'
+import OctopusIcon from '../components/OctopusIcon'
+import { useTheme } from '../hooks/useTheme'
 
 const features = [
   {
@@ -36,8 +38,27 @@ const features = [
 ]
 
 export default function LandingPage() {
+  const { isDark, toggleTheme } = useTheme()
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-purple-900/10 to-black">
+    <div className="min-h-screen" style={{ 
+      background: 'linear-gradient(135deg, var(--sb-bg-primary) 0%, var(--sb-bg-secondary) 50%, var(--sb-bg-primary) 100%)'
+    }}>
+      {/* Theme Toggle - Fixed Position */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={toggleTheme}
+        className="fixed top-6 right-6 z-50 p-3 rounded-full glass"
+        style={{ 
+          color: 'var(--sb-text-primary)',
+          boxShadow: 'var(--sb-shadow-md)'
+        }}
+        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+      </motion.button>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Animated background particles */}
@@ -45,13 +66,14 @@ export default function LandingPage() {
           {[...Array(50)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-1 h-1 bg-purple-500 rounded-full"
+              className="absolute w-1 h-1 rounded-full"
+              style={{ background: 'var(--sb-primary)' }}
               initial={{
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight,
+                x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
+                y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
               }}
               animate={{
-                y: [null, Math.random() * window.innerHeight],
+                y: [null, Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000)],
                 opacity: [0, 1, 0],
               }}
               transition={{
@@ -76,18 +98,20 @@ export default function LandingPage() {
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className="inline-block mb-6"
             >
-              <div className="text-8xl animate-float">🐙</div>
+              <OctopusIcon size="xl" />
             </motion.div>
 
-            <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500">
+            <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-clip-text text-transparent" style={{
+              backgroundImage: 'var(--sb-gradient-primary)'
+            }}>
               Octopus
             </h1>
 
-            <p className="text-2xl md:text-4xl text-gray-300 mb-4 font-light">
+            <p className="text-2xl md:text-4xl mb-4 font-light" style={{ color: 'var(--sb-text-primary)' }}>
               Your AI Second Brain
             </p>
 
-            <p className="text-xl md:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto" style={{ color: 'var(--sb-text-secondary)' }}>
               Store. Connect. Retrieve. Remember.
             </p>
 
@@ -99,14 +123,14 @@ export default function LandingPage() {
             >
               <Link
                 to="/signup"
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-white font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg shadow-purple-500/50"
+                className="neon-button-primary px-8 py-4 rounded-full font-semibold text-lg"
               >
                 Get Started Free
               </Link>
 
               <Link
                 to="/login"
-                className="px-8 py-4 glass rounded-full text-white font-semibold text-lg hover:bg-white/10 transition-all"
+                className="neon-button-secondary px-8 py-4 rounded-full font-semibold text-lg"
               >
                 Sign In
               </Link>
@@ -124,10 +148,10 @@ export default function LandingPage() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: 'var(--sb-text-primary)' }}>
             Everything You Need
           </h2>
-          <p className="text-xl text-gray-400">
+          <p className="text-xl" style={{ color: 'var(--sb-text-secondary)' }}>
             Built for researchers, writers, and knowledge workers
           </p>
         </motion.div>
@@ -141,11 +165,11 @@ export default function LandingPage() {
               transition={{ delay: index * 0.1, duration: 0.5 }}
               viewport={{ once: true }}
               whileHover={{ scale: 1.05 }}
-              className="glass p-6 rounded-2xl hover:bg-white/10 transition-all cursor-pointer"
+              className="neon-card p-6 rounded-2xl transition-all cursor-pointer"
             >
-              <feature.icon className="w-12 h-12 text-purple-400 mb-4" />
-              <h3 className="text-xl font-semibold mb-2 text-white">{feature.title}</h3>
-              <p className="text-gray-400">{feature.description}</p>
+              <feature.icon className="w-12 h-12 mb-4" style={{ color: 'var(--sb-secondary)' }} />
+              <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--sb-text-primary)' }}>{feature.title}</h3>
+              <p style={{ color: 'var(--sb-text-secondary)' }}>{feature.description}</p>
             </motion.div>
           ))}
         </div>
@@ -158,17 +182,17 @@ export default function LandingPage() {
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="glass p-12 rounded-3xl text-center"
+          className="neon-card p-12 rounded-3xl text-center"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: 'var(--sb-text-primary)' }}>
             Ready to Build Your Second Brain?
           </h2>
-          <p className="text-xl text-gray-400 mb-8">
+          <p className="text-xl mb-8" style={{ color: 'var(--sb-text-secondary)' }}>
             Join thousands of users organizing their knowledge with Octopus
           </p>
           <Link
             to="/signup"
-            className="inline-block px-12 py-5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-white font-bold text-xl hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg shadow-purple-500/50"
+            className="neon-button-primary inline-block px-12 py-5 rounded-full font-bold text-xl"
           >
             Start Free Today
           </Link>
@@ -176,10 +200,10 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-8">
+      <footer style={{ borderTop: '1px solid var(--sb-border)', paddingTop: '2rem', paddingBottom: '2rem' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-gray-500">
-            © 2025 Octopus. Built with ❤️ for knowledge workers.
+          <p className="text-center" style={{ color: 'var(--sb-text-tertiary)' }}>
+            &copy; 2025 Octopus. Built with ❤️ for knowledge workers.
           </p>
         </div>
       </footer>

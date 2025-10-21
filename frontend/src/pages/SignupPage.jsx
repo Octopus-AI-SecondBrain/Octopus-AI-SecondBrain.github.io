@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { UserPlus, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { UserPlus, Eye, EyeOff, CheckCircle, Mail, Moon, Sun } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
+import OctopusLoader from '../components/OctopusLoader'
+import OctopusIcon from '../components/OctopusIcon'
 
 const passwordRequirements = [
   { text: 'At least 8 characters', regex: /.{8,}/ },
@@ -13,22 +16,26 @@ const passwordRequirements = [
 
 export default function SignupPage() {
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const { signup } = useAuth()
+  const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   const usernameValid = username.trim().length >= 3
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  const emailValid = email.trim().length >= 3 && emailRegex.test(email)
   const passwordValid = passwordRequirements.every(req => req.regex.test(password))
-  const canSubmit = usernameValid && passwordValid && !loading
+  const canSubmit = usernameValid && emailValid && passwordValid && !loading
 
   const handleSubmit = async e => {
     e.preventDefault()
-    if (!usernameValid || !passwordValid) return
+    if (!usernameValid || !emailValid || !passwordValid) return
     setLoading(true)
 
-    const result = await signup(username, password)
+    const result = await signup(username, password, email)
     
     setLoading(false)
 
@@ -40,24 +47,39 @@ export default function SignupPage() {
   const checkRequirement = regex => regex.test(password)
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-purple-900/10 to-black px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: 'var(--sb-bg-primary)' }}>
+      {/* Theme Toggle */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={toggleTheme}
+        className="fixed top-6 right-6 z-50 p-3 rounded-full glass"
+        style={{ 
+          color: 'var(--sb-text-primary)',
+          boxShadow: 'var(--sb-shadow-md)'
+        }}
+        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+      </motion.button>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="glass p-8 rounded-3xl">
+        <div className="glass p-8 rounded-3xl" style={{ border: '1px solid var(--sb-border)', boxShadow: 'var(--sb-shadow-lg)' }}>
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="text-6xl mb-4">🐙</div>
-            <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-            <p className="text-gray-400">Start your Second Brain journey</p>
+            <OctopusIcon size="lg" className="mb-4 inline-block" style={{ color: 'var(--sb-primary)' }} />
+            <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--sb-text-primary)' }}>Create Account</h1>
+            <p style={{ color: 'var(--sb-text-secondary)' }}>Start your Second Brain journey</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="username" className="block text-sm font-medium mb-2" style={{ color: 'var(--sb-text-secondary)' }}>
                 Username
               </label>
               <input
@@ -67,14 +89,47 @@ export default function SignupPage() {
                 onChange={e => setUsername(e.target.value)}
                 required
                 minLength={3}
-                className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 transition-all"
+                style={{
+                  background: 'var(--sb-surface)',
+                  border: '1px solid var(--sb-border)',
+                  color: 'var(--sb-text-primary)',
+                  boxShadow: 'var(--sb-shadow-sm)'
+                }}
                 placeholder="Choose a username"
               />
-              <p className="mt-1 text-xs text-gray-500">At least 3 characters</p>
+              <p className="mt-1 text-xs" style={{ color: 'var(--sb-text-tertiary)' }}>At least 3 characters</p>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: 'var(--sb-text-secondary)' }}>
+                Email
+              </label>
+              <div className="relative">
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 transition-all pl-12"
+                  style={{
+                    background: 'var(--sb-surface)',
+                    border: '1px solid var(--sb-border)',
+                    color: 'var(--sb-text-primary)',
+                    boxShadow: 'var(--sb-shadow-sm)'
+                  }}
+                  placeholder="your@email.com"
+                />
+                <Mail size={20} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sb-text-tertiary)' }} />
+              </div>
+              <p className="mt-1 text-xs" style={{ color: email && !emailValid ? 'var(--sb-error)' : 'var(--sb-text-tertiary)' }}>
+                {email && !emailValid ? 'Please enter a valid email address' : 'Valid email required for account recovery'}
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: 'var(--sb-text-secondary)' }}>
                 Password
               </label>
               <div className="relative">
@@ -84,13 +139,22 @@ export default function SignupPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all pr-12"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 transition-all pr-12"
+                  style={{
+                    background: 'var(--sb-surface)',
+                    border: '1px solid var(--sb-border)',
+                    color: 'var(--sb-text-primary)',
+                    boxShadow: 'var(--sb-shadow-sm)'
+                  }}
                   placeholder="Create a strong password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{ color: 'var(--sb-text-secondary)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--sb-text-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--sb-text-secondary)'}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -102,13 +166,9 @@ export default function SignupPage() {
                   <div key={req.text} className="flex items-center gap-2 text-sm">
                     <CheckCircle
                       size={16}
-                      className={
-                        checkRequirement(req.regex) ? 'text-green-500' : 'text-gray-600'
-                      }
+                      style={{ color: checkRequirement(req.regex) ? 'var(--sb-success)' : 'var(--sb-text-tertiary)' }}
                     />
-                    <span
-                      className={checkRequirement(req.regex) ? 'text-green-400' : 'text-gray-500'}
-                    >
+                    <span style={{ color: checkRequirement(req.regex) ? 'var(--sb-success)' : 'var(--sb-text-tertiary)' }}>
                       {req.text}
                     </span>
                   </div>
@@ -121,35 +181,45 @@ export default function SignupPage() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={!canSubmit}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-semibold flex items-center justify-center gap-2 hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="neon-button-primary w-full py-3 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
-                <div className="loading-dots">
-                  <span>.</span>
-                  <span>.</span>
-                  <span>.</span>
-                </div>
-              ) : (
-                <>
-                  <UserPlus size={20} />
-                  Create Account
-                </>
-              )}
+              <div className="flex items-center justify-center gap-2">
+                {loading ? (
+                  <OctopusLoader size="sm" />
+                ) : (
+                  <>
+                    <UserPlus size={20} />
+                    Create Account
+                  </>
+                )}
+              </div>
             </motion.button>
           </form>
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <p className="text-gray-400">
+            <p style={{ color: 'var(--sb-text-secondary)' }}>
               Already have an account?{' '}
-              <Link to="/login" className="text-purple-400 hover:text-purple-300 font-semibold">
+              <Link 
+                to="/login" 
+                className="font-semibold transition-colors"
+                style={{ color: 'var(--sb-secondary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--sb-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--sb-secondary)'}
+              >
                 Sign in
               </Link>
             </p>
           </div>
 
           <div className="mt-4 text-center">
-            <Link to="/" className="text-sm text-gray-500 hover:text-gray-400">
+            <Link 
+              to="/" 
+              className="text-sm transition-colors"
+              style={{ color: 'var(--sb-text-tertiary)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--sb-text-secondary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--sb-text-tertiary)'}
+            >
               ← Back to home
             </Link>
           </div>

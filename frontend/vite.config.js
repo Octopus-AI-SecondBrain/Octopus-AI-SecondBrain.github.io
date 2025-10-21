@@ -8,13 +8,21 @@ export default defineConfig(({ command, mode }) => {
   // Load environment variables
   const env = loadEnv(mode, process.cwd(), '')
   
-  // Determine base path for GitHub Pages
-  // Use environment variable VITE_REPO_NAME if set, otherwise derive from git remote
+  // Determine base path for deployment
   const getBasePath = () => {
+    // Always use VITE_BASE_PATH if explicitly set
+    if (env.VITE_BASE_PATH) {
+      const basePath = env.VITE_BASE_PATH
+      // Ensure it starts with / and ends with /
+      return basePath.startsWith('/') 
+        ? (basePath.endsWith('/') ? basePath : basePath + '/') 
+        : ('/' + (basePath.endsWith('/') ? basePath : basePath + '/'))
+    }
+    
     if (mode === 'production') {
-      // For GitHub Pages, use the repository name as base path
-      // Can be overridden with VITE_BASE_PATH environment variable
-      return env.VITE_BASE_PATH || '/secondbrain/'
+      // For GitHub Pages, default to repository name
+      // This can be overridden by setting VITE_BASE_PATH
+      return '/secondbrain/'
     }
     return '/'
   }
@@ -44,7 +52,7 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: env.VITE_API_URL || 'http://localhost:8000',
+          target: env.VITE_API_URL || 'http://localhost:8001',
           changeOrigin: true,
           secure: false,
         },

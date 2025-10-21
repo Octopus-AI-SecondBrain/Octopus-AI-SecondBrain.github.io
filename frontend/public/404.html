@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecondBrain - Page Not Found</title>
+    <script>
+        // GitHub Pages SPA redirect hack
+        // This script takes the current URL and redirects to the root with the path as a query parameter
+        const pathSegmentsToKeep = 1; // Change this if your site is not hosted at the root
+        const l = window.location;
+        l.replace(
+            l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+            l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+            l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+            (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+            l.hash
+        );
+    </script>
+</head>
+<body>
+    <div style="
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+    ">
+        <h1 style="font-size: 2rem; margin-bottom: 1rem;">Redirecting...</h1>
+        <p>If you're not redirected automatically, please visit <a href="/" style="color: #fff; text-decoration: underline;">SecondBrain</a></p>
+    </div>
+</body>
+</html>

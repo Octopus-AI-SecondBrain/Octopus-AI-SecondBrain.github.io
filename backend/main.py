@@ -235,6 +235,10 @@ app.include_router(notes.router, prefix="/notes", tags=["Notes"])
 app.include_router(search.router, prefix="/search", tags=["Search"])
 app.include_router(map_route.router, prefix="/map", tags=["Map"])
 
+# Import and include analytics router
+from backend.routes import analytics
+app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+
 @app.get("/")
 def root():
     """Health check endpoint."""
@@ -252,13 +256,53 @@ def health_check():
     # Check database schema as part of health check
     schema_ok = check_database_schema()
     
-    return {
-        "status": "healthy" if schema_ok else "degraded",
+    # Check vector store status
+    vector_status = "unknown"
+    vector_error = None
+    try:
+        from backend.services.vector_store import get_client
+        client = get_client()
+        if client:
+            # Try to list collections to verify connectivity
+            collections = client.list_collections()
+            vector_status = "connected"
+        else:
+            vector_status = "disconnected"
+            vector_error = "Client initialization failed"
+    except Exception as e:
+        vector_status = "error"
+        vector_error = str(e)
+    
+    # Check OpenAI API availability
+    openai_status = "not_configured"
+    if os.getenv("OPENAI_API_KEY"):
+        openai_status = "configured"
+    
+    # Overall health
+    overall_status = "healthy"
+    if not schema_ok:
+        overall_status = "degraded"
+    elif vector_status == "error":
+        overall_status = "degraded"
+    
+    health_response = {
+        "status": overall_status,
         "version": settings.app_version,
         "environment": settings.environment,
         "database": "connected" if schema_ok else "schema_missing",
-        "message": "OK" if schema_ok else "Database schema missing - run 'alembic upgrade head'"
+        "vector_store": vector_status,
+        "openai": openai_status,
+        "message": "OK" if overall_status == "healthy" else "Some services are degraded"
     }
+    
+    # Add error details if present
+    if vector_error:
+        health_response["vector_error"] = vector_error
+    
+    if not schema_ok:
+        health_response["database_message"] = "Database schema missing - run 'alembic upgrade head'"
+    
+    return health_response
 
 # Startup event
 @app.on_event("startup")

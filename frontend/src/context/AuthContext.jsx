@@ -3,7 +3,6 @@ import api, { onUnauthorized } from '../utils/api'
 import { checkHealth, onHealthChange } from '../utils/healthCheck'
 import toast from 'react-hot-toast'
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
@@ -12,13 +11,14 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
-  // Check authentication status on mount
+  // Check authentication status and return explicit success/failure
   const checkAuth = useCallback(async () => {
     try {
       setLoading(true)
       const response = await api.get('/auth/me')
       setUser(response.data)
       setIsAuthenticated(true)
+      return { success: true, user: response.data }
     } catch (error) {
       // Only log if it's not a 401 (expected when not logged in)
       if (error.response?.status !== 401) {
@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
       }
       setUser(null)
       setIsAuthenticated(false)
+      return { success: false, error }
     } finally {
       setLoading(false)
       setInitialized(true)
@@ -110,29 +111,22 @@ export const AuthProvider = ({ children }) => {
       })
 
       // Check auth status after login with retries for cookie propagation
-      let authSuccess = false
+      let authResult = null
       for (let attempt = 1; attempt <= 3; attempt++) {
         await new Promise(resolve => setTimeout(resolve, attempt * 200)) // Progressive delay
-        try {
-          await checkAuth()
-          if (isAuthenticated) {
-            authSuccess = true
-            break
-          }
-        } catch (authError) {
-          if (attempt === 3) {
-            console.warn('Auth check failed after login, but login was successful')
-          }
+        authResult = await checkAuth()
+        if (authResult.success) {
+          break
         }
       }
       
-      if (authSuccess) {
+      if (authResult?.success) {
         toast.success('Welcome back! 🧠')
+        return { success: true, user: authResult.user }
       } else {
         toast.success('Login successful! If you experience issues, please refresh the page.')
+        return { success: true }
       }
-      
-      return { success: true }
     } catch (error) {
       let message = 'Login failed. Please check your credentials.'
 
@@ -167,12 +161,17 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const signup = async (username, password) => {
+  const signup = async (username, password, email = null) => {
     try {
       const cleanUsername = (username || '').trim()
+      const cleanEmail = email ? (email || '').trim() : null
 
       // Attempt signup
-      await api.post('/auth/signup', { username: cleanUsername, password })
+      await api.post('/auth/signup', { 
+        username: cleanUsername, 
+        password,
+        email: cleanEmail 
+      })
 
       // Auto-login after signup with improved error handling
       const loginResult = await login(cleanUsername, password)
@@ -208,6 +207,8 @@ export const AuthProvider = ({ children }) => {
           }
         } else if (status === 400 && message.includes('already taken')) {
           message = 'Username is already taken. Please choose a different one.'
+        } else if (status === 400 && message.includes('already registered')) {
+          message = 'Email is already registered. Please use a different email.'
         }
       } else if (status === 0 || error?.message === 'Network Error') {
         message = 'Cannot reach server. Please check your connection.'

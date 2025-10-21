@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List
 
-from sqlalchemy import ForeignKey, Integer, String, Text, DateTime, func
+from sqlalchemy import ForeignKey, Integer, String, Text, DateTime, func, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
@@ -14,6 +14,7 @@ class Note(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String, index=True, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    tags: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True, server_default='[]')
     embedding_model: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

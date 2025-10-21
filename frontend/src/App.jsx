@@ -1,20 +1,34 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { useAuth } from './hooks/useAuth'
+import { useState, lazy, Suspense } from 'react'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import OctopusLoader from './components/OctopusLoader'
 
-// Pages
-import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/LoginPage'
-import SignupPage from './pages/SignupPage'
-import DashboardPage from './pages/DashboardPage'
-import NotesPage from './pages/NotesPage'
-import NeuralMapPage from './pages/NeuralMapPage'
-import SearchPage from './pages/SearchPage'
-
-// Layout
+// Layout and components
 import MainLayout from './components/layout/MainLayout'
+
+// Landing page - loaded immediately
+import LandingPage from './pages/LandingPage'
+
+// Lazy load pages for better performance
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const SignupPage = lazy(() => import('./pages/SignupPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const NotesPage = lazy(() => import('./pages/NotesPage'))
+const NeuralMapPage = lazy(() => import('./pages/NeuralMapPage'))
+const SearchPage = lazy(() => import('./pages/SearchPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal'))
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <OctopusLoader size="lg" />
+  </div>
+)
 
 // Protected Route Component - moved inside AuthProvider context
 const ProtectedRoute = ({ children }) => {
@@ -23,11 +37,7 @@ const ProtectedRoute = ({ children }) => {
   if (loading || !initialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="loading-dots text-2xl">
-          <span>.</span>
-          <span>.</span>
-          <span>.</span>
-        </div>
+        <OctopusLoader size="lg" />
       </div>
     )
   }
@@ -42,11 +52,7 @@ const GuestRoute = ({ children }) => {
   if (loading || !initialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="loading-dots text-2xl">
-          <span>.</span>
-          <span>.</span>
-          <span>.</span>
-        </div>
+        <OctopusLoader size="lg" />
       </div>
     )
   }
@@ -56,31 +62,125 @@ const GuestRoute = ({ children }) => {
 
 // App Routes Component - this ensures ProtectedRoute is within AuthProvider
 const AppRoutes = () => {
-  return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
-      <Route path="/signup" element={<GuestRoute><SignupPage /></GuestRoute>} />
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
-      {/* Protected Routes */}
-      <Route
-        path="/app"
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
+  // Global keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: 'k',
+      modifier: 'cmd',
+      action: () => {
+        if (isAuthenticated) {
+          navigate('/app/search')
         }
-      >
-        <Route index element={<DashboardPage />} />
-        <Route path="notes" element={<NotesPage />} />
-        <Route path="map" element={<NeuralMapPage />} />
-        <Route path="search" element={<SearchPage />} />
-      </Route>
+      },
+    },
+    {
+      key: 'n',
+      modifier: 'cmd',
+      action: () => {
+        if (isAuthenticated) {
+          navigate('/app/notes')
+          // Trigger new note creation via custom event
+          window.dispatchEvent(new CustomEvent('create-note'))
+        }
+      },
+    },
+    {
+      key: '/',
+      modifier: 'cmd',
+      action: () => {
+        setShowShortcuts(true)
+      },
+    },
+  ])
 
-      {/* 404 */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+  return (
+    <>
+      <Suspense fallback={<PageLoader />}>
+        <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+      </Suspense>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route 
+          path="/login" 
+          element={
+            <GuestRoute>
+              <Suspense fallback={<PageLoader />}>
+                <LoginPage />
+              </Suspense>
+            </GuestRoute>
+          } 
+        />
+        <Route 
+          path="/signup" 
+          element={
+            <GuestRoute>
+              <Suspense fallback={<PageLoader />}>
+                <SignupPage />
+              </Suspense>
+            </GuestRoute>
+          } 
+        />
+
+        {/* Protected Routes */}
+        <Route
+          path="/app"
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route 
+            index 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <DashboardPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="notes" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <NotesPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="map" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <NeuralMapPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="search" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <SearchPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="settings" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <SettingsPage />
+              </Suspense>
+            } 
+          />
+        </Route>
+
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   )
 }
 
@@ -94,21 +194,21 @@ function App() {
           toastOptions={{
             duration: 4000,
             style: {
-              background: 'rgba(26, 26, 26, 0.95)',
-              color: '#fff',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
+              background: 'var(--sb-surface)',
+              color: 'var(--sb-text-primary)',
+              border: '1px solid var(--sb-border)',
               backdropFilter: 'blur(10px)',
             },
             success: {
               iconTheme: {
-                primary: '#10b981',
-                secondary: '#fff',
+                primary: 'var(--sb-success)',
+                secondary: 'var(--sb-surface)',
               },
             },
             error: {
               iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
+                primary: 'var(--sb-error)',
+                secondary: 'var(--sb-surface)',
               },
             },
           }}

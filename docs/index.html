@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Octopus SecondBrain - Your AI-Powered Knowledge Hub</title>
+    <meta name="description" content="Organize your thoughts, discover connections, and unlock insights with AI-powered semantic search and 3D neural map visualization.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <svg class="octopus-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="40" r="25" fill="currentColor"/>
+                        <path d="M 35 55 Q 25 70 20 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                        <path d="M 42 55 Q 35 70 32 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                        <path d="M 50 55 Q 50 70 50 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                        <path d="M 58 55 Q 65 70 68 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                        <path d="M 65 55 Q 75 70 80 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                        <circle cx="43" cy="38" r="3" fill="white"/>
+                        <circle cx="57" cy="38" r="3" fill="white"/>
+                    </svg>
+                    <span>Octopus SecondBrain</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#demo">Demo</a>
+                    <a href="#beta">Beta</a>
+                    <a href="https://github.com/Octopus-AI-SecondBrain/Octopus-AI-SecondBrain.github.io" target="_blank" rel="noopener">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span>✨ Now in Beta</span>
+                </div>
+                <h1 class="hero-title">
+                    Your Second Brain,<br>
+                    <span class="gradient-text">Powered by AI</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Organize your thoughts, discover hidden connections, and unlock insights with 
+                    AI-powered semantic search and stunning 3D neural map visualization.
+                </p>
+                                <div class="hero-buttons">
+                    <a href="#demo" id="tryDemoBtn" class="btn btn-primary">Try Demo</a>
+                    <a href="https://forms.gle/wz51dsAm3vmePibr6" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Join Beta</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">10K+</div>
+                        <div class="stat-label">Notes Organized</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">500+</div>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="neural-map-preview">
+                    <div class="node node-1"></div>
+                    <div class="node node-2"></div>
+                    <div class="node node-3"></div>
+                    <div class="node node-4"></div>
+                    <div class="node node-5"></div>
+                    <svg class="connections" viewBox="0 0 400 400">
+                        <line x1="200" y1="200" x2="100" y2="100" class="connection"/>
+                        <line x1="200" y1="200" x2="300" y2="100" class="connection"/>
+                        <line x1="200" y1="200" x2="100" y2="300" class="connection"/>
+                        <line x1="200" y1="200" x2="300" y2="300" class="connection"/>
+                        <line x1="100" y1="100" x2="300" y2="100" class="connection"/>
+                        <line x1="100" y1="300" x2="300" y2="300" class="connection"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Powerful Features for Knowledge Management</h2>
+                <p>Everything you need to build your personal knowledge graph</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>AI-Powered Semantic Search</h3>
+                    <p>Find notes by meaning, not just keywords. Our AI understands context and discovers related concepts automatically.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>3D Neural Map Visualization</h3>
+                    <p>See your knowledge come alive. Explore connections in stunning 3D with force-directed layouts and interactive nodes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3>Automatic Link Discovery</h3>
+                    <p>Let AI find hidden connections between your notes. Discover patterns and relationships you never knew existed.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Mobile-Friendly Bulk Import</h3>
+                    <p>Import notes from anywhere - Apple Notes, text files, or paste directly. Add hundreds of notes in seconds.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏷️</div>
+                    <h3>Smart Tagging System</h3>
+                    <p>Organize with hashtags, filter by tags, and auto-extract tags from your content. Keep everything structured.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Built with modern tech stack - React, FastAPI, and ChromaDB for instant search and smooth interactions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo">
+        <div class="container">
+            <div class="section-header">
+                <h2>See It In Action</h2>
+                <p>Experience the power of your AI-powered second brain</p>
+            </div>
+            <div class="demo-content">
+                <div class="demo-video">
+                    <div class="video-placeholder">
+                        <div class="play-button">
+                            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                                <circle cx="40" cy="40" r="40" fill="rgba(242, 77, 128, 0.2)"/>
+                                <circle cx="40" cy="40" r="30" fill="#F24D80"/>
+                                <path d="M32 26L54 40L32 54V26Z" fill="white"/>
+                            </svg>
+                        </div>
+                        <p>Demo Video Coming Soon</p>
+                    </div>
+                </div>
+                <div class="demo-features">
+                    <h3>What You'll Experience</h3>
+                    <ul class="feature-list">
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="#F24D80" stroke-width="2"/>
+                                <path d="M8 12L11 15L16 9" stroke="#F24D80" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Create and organize notes instantly
+                        </li>
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="#F24D80" stroke-width="2"/>
+                                <path d="M8 12L11 15L16 9" stroke="#F24D80" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Watch AI discover connections
+                        </li>
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="#F24D80" stroke-width="2"/>
+                                <path d="M8 12L11 15L16 9" stroke="#F24D80" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Explore the 3D neural map
+                        </li>
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="#F24D80" stroke-width="2"/>
+                                <path d="M8 12L11 15L16 9" stroke="#F24D80" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Search by meaning, not keywords
+                        </li>
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="#F24D80" stroke-width="2"/>
+                                <path d="M8 12L11 15L16 9" stroke="#F24D80" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Bulk import from any source
+                        </li>
+                    </ul>
+                    <a href="#" class="btn btn-primary" id="tryDemoBtn2">Try It Yourself →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beta Signup Section -->
+            <!-- Beta Signup Section -->
+        <section id="beta" class="beta-section">
+            <div class="container">
+                <div class="beta-content">
+                    <h2>Join the Beta</h2>
+                    <p>Be among the first to experience the future of knowledge management. Limited spots available.</p>
+                    
+                    <!-- Direct link to Google Form (easiest method) -->
+                    <div class="beta-cta">
+                        <a href="https://forms.gle/wz51dsAm3vmePibr6" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="btn btn-primary btn-large">
+                            Join Beta Waitlist
+                        </a>
+                        <p class="beta-subtitle">Fill out a quick form to reserve your spot</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <svg class="octopus-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="40" r="25" fill="currentColor"/>
+                            <path d="M 35 55 Q 25 70 20 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                            <path d="M 42 55 Q 35 70 32 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                            <path d="M 50 55 Q 50 70 50 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                            <path d="M 58 55 Q 65 70 68 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                            <path d="M 65 55 Q 75 70 80 85" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                            <circle cx="43" cy="38" r="3" fill="white"/>
+                            <circle cx="57" cy="38" r="3" fill="white"/>
+                        </svg>
+                        <span>Octopus SecondBrain</span>
+                    </div>
+                    <p class="footer-tagline">Your AI-powered knowledge hub</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#demo">Demo</a></li>
+                        <li><a href="#beta">Beta Program</a></li>
+                        <li><a href="#">Pricing (Coming Soon)</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="https://github.com/Octopus-AI-SecondBrain/Octopus-AI-SecondBrain.github.io" target="_blank">GitHub</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Changelog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Tech Stack</h4>
+                    <ul>
+                        <li>React + Vite</li>
+                        <li>FastAPI (Python)</li>
+                        <li>ChromaDB + SQLite</li>
+                        <li>OpenAI Embeddings</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Octopus SecondBrain. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Demo Modal (to be shown when "Try Demo" is clicked) -->
+    <div id="demoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Launch Demo</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>The live demo will open in a new window. Please allow pop-ups if blocked.</p>
+                <p><strong>Demo URL:</strong></p>
+                <input type="text" id="demoUrl" value="http://localhost:3000" readonly class="demo-url-input">
+                <p class="note">Note: Update this URL to your deployed Render.com URL when ready!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn">Cancel</button>
+                <a href="http://localhost:3000" target="_blank" class="btn btn-primary" id="launchDemo">Launch Demo →</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

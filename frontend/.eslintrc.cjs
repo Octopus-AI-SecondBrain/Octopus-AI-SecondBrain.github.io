@@ -14,8 +14,9 @@ module.exports = {
   rules: {
     'react-refresh/only-export-components': [
       'warn',
-      { allowConstantExport: true },
+      { allowConstantExport: true, allowExportNames: ['ThemeContext', 'AuthContext'] },
     ],
     'react/prop-types': 'off',
+    'no-console': ['error', { allow: ['error', 'warn'] }],
   },
 }

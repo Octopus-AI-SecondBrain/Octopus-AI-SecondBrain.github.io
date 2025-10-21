@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { Home, FileText, Network, Search, Settings } from 'lucide-react'
 import { motion } from 'framer-motion'
+import OctopusIcon from '../OctopusIcon'
 
 const navItems = [
   { to: '/app', icon: Home, label: 'Dashboard', end: true },
@@ -11,14 +12,14 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 glass border-r border-white/10 flex flex-col">
+    <aside className="w-64 glass flex flex-col" style={{ borderRight: '1px solid var(--sb-border)' }}>
       {/* Logo */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-6" style={{ borderBottom: '1px solid var(--sb-border)' }}>
         <div className="flex items-center gap-3">
-          <span className="text-4xl">🐙</span>
+          <OctopusIcon size="md" animationStyle="pulse" style={{ color: 'var(--sb-primary)' }} />
           <div>
-            <h1 className="text-xl font-bold text-white">Octopus</h1>
-            <p className="text-xs text-gray-400">Your Second Brain</p>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--sb-text-primary)' }}>Octopus</h1>
+            <p className="text-xs" style={{ color: 'var(--sb-text-tertiary)' }}>Your Second Brain</p>
           </div>
         </div>
       </div>
@@ -32,21 +33,18 @@ export default function Sidebar() {
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-purple-600 text-white'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                  }`
+                  isActive ? 'neon-nav-link neon-nav-link-active' : 'neon-nav-link'
                 }
               >
                 {({ isActive }) => (
                   <>
                     <item.icon size={20} />
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium ml-3">{item.label}</span>
                     {isActive && (
                       <motion.div
                         layoutId="activeTab"
-                        className="ml-auto w-1 h-6 bg-white rounded-full"
+                        className="ml-auto w-1 h-6 rounded-full"
+                        style={{ background: 'white' }}
                       />
                     )}
                   </>
@@ -58,13 +56,13 @@ export default function Sidebar() {
       </nav>
 
       {/* Settings */}
-      <div className="p-4 border-t border-white/10">
+      <div className="p-4" style={{ borderTop: '1px solid var(--sb-border)' }}>
         <NavLink
           to="/app/settings"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition-all"
+          className="neon-nav-link"
         >
           <Settings size={20} />
-          <span className="font-medium">Settings</span>
+          <span className="font-medium ml-3">Settings</span>
         </NavLink>
       </div>
     </aside>

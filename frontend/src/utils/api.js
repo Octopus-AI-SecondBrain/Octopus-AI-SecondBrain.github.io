@@ -9,7 +9,7 @@ const getApiUrl = () => {
   // Always require VITE_API_URL to be explicitly set
   if (!viteApiUrl) {
     const errorMsg = isDevelopment 
-      ? 'VITE_API_URL must be set. Add VITE_API_URL=http://localhost:8000 to your .env.local file'
+      ? 'VITE_API_URL must be set. Add VITE_API_URL=http://localhost:8001 to your .env.local file'
       : 'VITE_API_URL must be set in production to avoid mixed content errors'
     
     console.error(`CRITICAL: ${errorMsg}`)
@@ -18,8 +18,16 @@ const getApiUrl = () => {
     if (isDevelopment) {
       throw new Error(`Missing VITE_API_URL environment variable.\n\n${errorMsg}`)
     } else {
-      return 'https://api-not-configured.invalid'
+      // Fail fast in production - don't allow invalid URLs
+      throw new Error(`Production build requires VITE_API_URL to be set to the backend URL`)
     }
+  }
+  
+  // Validate URL format
+  try {
+    new URL(viteApiUrl)
+  } catch (e) {
+    throw new Error(`Invalid VITE_API_URL format: ${viteApiUrl}. Must be a valid URL (e.g., https://api.example.com)`)
   }
   
   return viteApiUrl
@@ -65,7 +73,6 @@ api.interceptors.response.use(
         try {
           listener(error)
         } catch (e) {
-          // eslint-disable-next-line no-console
           console.error('onUnauthorized listener error:', e)
         }
       })

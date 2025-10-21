@@ -123,9 +123,6 @@ def ensure_user_embeddings(db_session: Session, owner_id: int) -> None:
     Args:
         db_session: SQLAlchemy database session
         owner_id: User ID to process notes for
-        
-    Raises:
-        RuntimeError: If embedding generation or storage fails
     """
     try:
         collection = get_collection()
@@ -157,6 +154,7 @@ def ensure_user_embeddings(db_session: Session, owner_id: int) -> None:
                         "owner_id": owner_id,
                         "embedding_model": model_id,
                         "title": note_obj.title or "",
+                        "tags": ",".join(note_obj.tags or []),
                         "created_at": note_obj.created_at.isoformat() if note_obj.created_at else "",
                     }],
                     documents=[note_obj.content or ""]
@@ -176,20 +174,29 @@ def ensure_user_embeddings(db_session: Session, owner_id: int) -> None:
                 # Continue processing other notes instead of failing completely
                 continue
         
-        db_session.commit()
-        logger.info(f"Successfully processed embeddings for user {owner_id}")
+        try:
+            db_session.commit()
+            logger.info(f"Successfully processed embeddings for user {owner_id}")
+        except Exception as commit_exc:
+            logger.error(f"Database commit failed for user {owner_id}: {commit_exc}", exc_info=True)
+            db_session.rollback()
+            # Don't raise - the session is now clean
         
     except Exception as exc:
         logger.error(f"Error ensuring embeddings for user {owner_id}: {exc}", exc_info=True)
-        db_session.rollback()
-        raise RuntimeError(f"Failed to ensure embeddings: {exc}")
+        try:
+            db_session.rollback()
+        except Exception:
+            pass  # Already rolled back or session closed
+        # Don't raise - allow the caller to continue without embeddings
 
 
 def search_similar_notes(
     db_session: Session, 
     owner_id: int, 
     query: str, 
-    limit: int = 10
+    limit: int = 10,
+    min_similarity: float = 0.15  # Lower threshold for more results
 ) -> List[note.Note]:
     """
     Search for similar notes using vector similarity.
@@ -199,6 +206,7 @@ def search_similar_notes(
         owner_id: User ID to search notes for
         query: Search query text
         limit: Maximum number of results to return
+        min_similarity: Minimum cosine similarity score (0-1)
         
     Returns:
         List of similar notes ordered by similarity
@@ -208,17 +216,19 @@ def search_similar_notes(
         
         # Generate embedding for the query
         try:
-            query_embedding, _ = generate_embedding(query)
+            query_embedding, model_used = generate_embedding(query)
+            logger.info(f"Generated query embedding using {model_used}")
         except Exception as exc:
             logger.error(f"Failed to generate query embedding: {exc}", exc_info=True)
             return []
         
-        # Search in ChromaDB
+        # Search in ChromaDB with higher limit to allow filtering
         try:
             results = collection.query(
                 query_embeddings=[query_embedding],
                 where=build_where(owner_id),
-                n_results=limit
+                n_results=min(limit * 2, 100),  # Get more results to filter
+                include=['distances']  # Include similarity scores
             )
         except Exception as exc:
             logger.error(f"ChromaDB query failed: {exc}", exc_info=True)
@@ -228,8 +238,33 @@ def search_similar_notes(
             logger.debug(f"No similar notes found for user {owner_id}")
             return []
         
-        # Get the note IDs
-        note_ids = [int(id_) for id_ in results["ids"][0]]
+        # Get distances and filter by similarity threshold
+        # ChromaDB returns cosine distance (0=identical, 2=opposite)
+        # Convert to similarity: similarity = 1 - (distance / 2)
+        note_ids_with_scores = []
+        distances = results.get("distances")
+        if distances and distances[0] and results["ids"] and results["ids"][0]:
+            for note_id, distance in zip(results["ids"][0], distances[0]):
+                similarity = 1.0 - (distance / 2.0)
+                if similarity >= min_similarity:
+                    note_ids_with_scores.append((int(note_id), similarity))
+                    
+            logger.info(f"Found {len(note_ids_with_scores)} notes above similarity threshold {min_similarity}")
+        else:
+            # Fallback if distances not available
+            if results["ids"] and results["ids"][0]:
+                note_ids_with_scores = [(int(id_), 0.5) for id_ in results["ids"][0][:limit]]
+        
+        # Sort by similarity and limit
+        note_ids_with_scores.sort(key=lambda x: x[1], reverse=True)
+        note_ids_with_scores = note_ids_with_scores[:limit]
+        
+        if not note_ids_with_scores:
+            logger.info(f"No notes met similarity threshold {min_similarity}")
+            return []
+        
+        # Get note IDs in order
+        note_ids = [id_ for id_, _ in note_ids_with_scores]
         
         # Fetch the actual notes from the database
         notes = (
@@ -239,11 +274,11 @@ def search_similar_notes(
             .all()
         )
         
-        # Order notes by the similarity score order from ChromaDB
+        # Order notes by the similarity score order
         note_dict = {n.id: n for n in notes}
         ordered_notes = [note_dict[note_id] for note_id in note_ids if note_id in note_dict]
         
-        logger.info(f"Found {len(ordered_notes)} similar notes for user {owner_id}")
+        logger.info(f"Returning {len(ordered_notes)} similar notes for user {owner_id} (query: '{query[:50]}')")
         return ordered_notes
         
     except Exception as exc:
@@ -254,13 +289,11 @@ def search_similar_notes(
 def add_note_to_vector_store(db_session: Session, note_obj: note.Note) -> None:
     """
     Add a single note to the vector store.
+    Does NOT commit the session - caller is responsible for commit.
     
     Args:
         db_session: SQLAlchemy database session
         note_obj: Note object to add
-        
-    Raises:
-        RuntimeError: If embedding generation or storage fails
     """
     try:
         collection = get_collection()
@@ -270,7 +303,8 @@ def add_note_to_vector_store(db_session: Session, note_obj: note.Note) -> None:
             embedding, model_id = generate_embedding(note_obj.content or "")
         except Exception as exc:
             logger.error(f"Failed to generate embedding for note {note_obj.id}: {exc}", exc_info=True)
-            raise RuntimeError(f"Embedding generation failed: {exc}")
+            # Don't raise - allow note creation to succeed without embeddings
+            return
         
         # Store in ChromaDB
         try:
@@ -281,28 +315,24 @@ def add_note_to_vector_store(db_session: Session, note_obj: note.Note) -> None:
                     "owner_id": note_obj.owner_id,
                     "embedding_model": model_id,
                     "title": note_obj.title or "",
+                    "tags": ",".join(note_obj.tags or []),
                     "created_at": note_obj.created_at.isoformat() if note_obj.created_at else "",
                 }],
                 documents=[note_obj.content or ""]
             )
         except Exception as exc:
             logger.error(f"Failed to store embedding in ChromaDB for note {note_obj.id}: {exc}", exc_info=True)
-            raise RuntimeError(f"ChromaDB storage failed: {exc}")
+            # Don't raise - allow note creation to succeed without embeddings
+            return
         
-        # Update the note in the database
+        # Update the note in the database (don't commit - caller will do that)
         note_obj.embedding_model = model_id
         db_session.add(note_obj)
-        db_session.commit()
+        logger.info(f"Successfully prepared note {note_obj.id} for vector store")
         
-        logger.info(f"Successfully added note {note_obj.id} to vector store")
-        
-    except RuntimeError:
-        db_session.rollback()
-        raise
     except Exception as exc:
         logger.error(f"Unexpected error adding note {note_obj.id} to vector store: {exc}", exc_info=True)
-        db_session.rollback()
-        raise RuntimeError(f"Failed to add note to vector store: {exc}")
+        # Don't pollute the session - just log and continue
 
 
 def delete_note_from_vector_store(note_id: int) -> None:

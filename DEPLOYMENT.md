@@ -1,14 +1,14 @@
 # 🚀 Deployment Guide
 
 This guide covers deploying the SecondBrain application with:
-- **Frontend**: GitHub Pages (free, automatic deployment)
+- **Frontend**: GitHub Pages (free, automatic deployment) - React + Vite SPA
 - **Backend**: Render.com (free tier available, managed PostgreSQL)
 
 ## 📋 Prerequisites
 
 1. **GitHub Repository**: Push your code to GitHub
 2. **Render Account**: Sign up at [render.com](https://render.com)
-3. **OpenAI API Key**: Required for embedding functionality
+3. **OpenAI API Key** (Optional): For AI-powered search explanations (can also be set in Settings page)
 
 ## 🌐 Frontend Deployment (GitHub Pages)
 
@@ -31,7 +31,8 @@ This guide covers deploying the SecondBrain application with:
    ```
 
 3. **Deploy**:
-   - Push to `main` branch triggers automatic deployment
+   - Push to `main` branch triggers automatic deployment via GitHub Actions
+   - The workflow builds the Vite app and deploys to gh-pages branch
    - Visit: `https://octopus-ai-secondbrain.github.io/Octopus-AI-SecondBrain.github.io/`
 
 ### Manual Local Build
@@ -41,7 +42,7 @@ cd frontend
 npm install
 npm run build
 
-# Test locally
+# Test production build locally
 npm run preview
 ```
 
@@ -77,7 +78,6 @@ npm run preview
    # Required
    DATABASE_URL=<your-postgresql-url-from-step-1>
    SECRET_KEY=<generate-32-character-secret>
-   OPENAI_API_KEY=<your-openai-api-key>
    
    # Application
    ENVIRONMENT=production
@@ -88,6 +88,9 @@ npm run preview
    # CORS - use host origins only, no path segments
    # Add your Render backend URL and GitHub Pages origin
    CORS_ORIGINS=https://octopus-ai-secondbrain.github.io,https://your-backend-name.onrender.com
+   
+   # Optional: AI Features
+   OPENAI_API_KEY=<your-openai-api-key>  # Can also be set in Settings page
    
    # Server
    HOST=0.0.0.0

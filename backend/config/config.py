@@ -86,13 +86,15 @@ class SecuritySettings(BaseModel):
         # Enforce SECRET_KEY requirement in non-development environments
         if environment != "development":
             if not secret_key or secret_key in ("dev-secret-change-me", "your-secret-key-here"):
-                raise RuntimeError(
-                    f"SECRET_KEY is required when ENVIRONMENT={environment}. "
-                    "Set a strong SECRET_KEY environment variable."
+                raise ValueError(
+                    f"CRITICAL: SECRET_KEY is required when ENVIRONMENT={environment}. "
+                    "Set a strong SECRET_KEY environment variable (32+ characters). "
+                    "Generate one with: openssl rand -base64 48"
                 )
             if len(secret_key) < 32:
-                raise RuntimeError(
-                    f"SECRET_KEY must be at least 32 characters in {environment} environment."
+                raise ValueError(
+                    f"CRITICAL: SECRET_KEY must be at least 32 characters in {environment} environment. "
+                    f"Current length: {len(secret_key)}. Generate a secure key with: openssl rand -base64 48"
                 )
         
         return secret_key
@@ -164,7 +166,9 @@ class CORSSettings(BaseModel):
     allowed_origins: List[str] = Field(
         default=[
             "http://localhost:3000",
-            "http://127.0.0.1:3000", 
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001", 
             "http://localhost:8080",
             "http://127.0.0.1:8080",
             "http://localhost:5173",
@@ -401,6 +405,8 @@ def _load_settings() -> Settings:
             allowed_origins=os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else [
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3001",
                 "http://localhost:8080", 
                 "http://127.0.0.1:8080",
                 "http://localhost:5173",

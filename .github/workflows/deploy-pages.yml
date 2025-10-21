@@ -41,12 +41,22 @@ jobs:
           cd frontend
           npm run test:ci || echo "No tests configured, skipping..."
 
+      - name: Validate environment variables
+        run: |
+          if [ -z "${{ secrets.VITE_API_URL }}" ]; then
+            echo "WARNING: VITE_API_URL secret is not set"
+            echo "Please set this secret in your GitHub repository settings"
+            echo "It should point to your Render backend URL (e.g., https://your-app.onrender.com)"
+          fi
+
       - name: Build frontend
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_BASE_PATH: /secondbrain/
         run: |
           cd frontend
+          echo "Building with API URL: ${VITE_API_URL}"
+          echo "Building with base path: ${VITE_BASE_PATH}"
           npm run build
 
       - name: Upload build artifacts
