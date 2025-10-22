@@ -919,26 +919,36 @@ git push origin main
 - Auto-deployment via GitHub Actions
 - Free hosting with 99.9% uptime
 
-## Scripts
+## 📜 Scripts
 
-- `./scripts/setup.sh` - Initial project setup
-- `./scripts/start.sh` - Start the backend server
-- `./scripts/serve-frontend.sh` - Serve frontend files locally
+- `./run_local.sh` - Start both backend and frontend in development mode
+- `./scripts/setup_demo_account.py` - Create demo account with sample data
+- `./scripts/validate.py` - Validate configuration and dependencies
 
-## Contributing
+## 📚 Documentation
+
+### Essential Guides
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete production deployment guide
+- **[PRODUCTION_HOSTING_GUIDE.md](PRODUCTION_HOSTING_GUIDE.md)** - Detailed hosting options
+- **[PRODUCTION_READY_CHECKLIST.md](PRODUCTION_READY_CHECKLIST.md)** - Pre-launch checklist
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Local development setup
+- **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Project overview and architecture
+
+### Demo & Features
+- **[docs/NEURAL_MAP_DEMO.md](docs/NEURAL_MAP_DEMO.md)** - Neural map documentation
+- **[Live Demos](https://octopus-ai-secondbrain.github.io)**:
+  - [Full 3D Neural Map](https://octopus-ai-secondbrain.github.io/demo-neural-map.html)
+  - [Complete App Demo](https://octopus-ai-secondbrain.github.io/demo-app.html)
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature-name`
 3. Make changes following the project structure
 4. Add tests for new functionality
 5. Update documentation as needed
-6. Submit pull request
-
-## Documentation
-
-- [API Documentation](docs/api.md) - REST API endpoints
-- [Development Guide](docs/development.md) - Development workflow and guidelines
-- [Deployment Guide](DEPLOYMENT_GUIDE.md) - Production deployment instructions
+6. Run linting: `npm run lint` (frontend) & ensure Python passes checks
+7. Submit pull request with clear description
 
 ## License
 
