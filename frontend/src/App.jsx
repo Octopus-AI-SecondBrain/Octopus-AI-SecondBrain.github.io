@@ -21,6 +21,7 @@ const NotesPage = lazy(() => import('./pages/NotesPage'))
 const NeuralMapPage = lazy(() => import('./pages/NeuralMapPage'))
 const SearchPage = lazy(() => import('./pages/SearchPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const RAGPage = lazy(() => import('./pages/RAGPage'))
 const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal'))
 
 // Loading fallback component
@@ -172,6 +173,14 @@ const AppRoutes = () => {
             element={
               <Suspense fallback={<PageLoader />}>
                 <SettingsPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="knowledge" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <RAGPage />
               </Suspense>
             } 
           />

@@ -1,0 +1,102 @@
+# Octopus AI Second Brain - Docker Compose Configuration
+# Brings up PostgreSQL with pgvector, Backend (FastAPI), and Frontend (Next.js)
+
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: octopus-postgres
+    environment:
+      POSTGRES_USER: secondbrain
+      POSTGRES_PASSWORD: secondbrain
+      POSTGRES_DB: secondbrain
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secondbrain"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - octopus-network
+
+  # Backend (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../infra/Dockerfile.backend
+    container_name: octopus-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://secondbrain:secondbrain@postgres:5432/secondbrain
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production-min-32-characters}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:80
+      - HOST=0.0.0.0
+      - PORT=8000
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app:ro
+      - upload_data:/app/data/uploads
+      - logs_data:/app/logs
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        echo 'Running migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting server...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - octopus-network
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../infra/Dockerfile.frontend
+    container_name: octopus-frontend
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - octopus-network
+
+volumes:
+  postgres_data:
+    driver: local
+  upload_data:
+    driver: local
+  logs_data:
+    driver: local
+
+networks:
+  octopus-network:
+    driver: bridge

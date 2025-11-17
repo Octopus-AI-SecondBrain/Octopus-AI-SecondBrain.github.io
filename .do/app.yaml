@@ -1,0 +1,103 @@
+# DigitalOcean App Platform Configuration
+# Deploy with: doctl apps create --spec .do/app.yaml
+
+name: secondbrain-api
+region: nyc
+
+databases:
+  - name: secondbrain-db
+    engine: PG
+    version: "15"
+    size: db-s-dev-database  # Free/cheapest tier
+    num_nodes: 1
+    production: false  # Set to true for production
+
+services:
+  - name: api
+    github:
+      repo: Octopus-AI-SecondBrain/Octopus-AI-SecondBrain.github.io
+      branch: main
+      deploy_on_push: true
+
+    source_dir: /backend
+
+    build_command: |
+      pip install --upgrade pip setuptools wheel
+      pip install -e .
+
+    run_command: uvicorn app.main:app --host 0.0.0.0 --port 8080
+
+    environment_slug: python
+
+    instance_count: 1
+    instance_size_slug: basic-xxs  # $5/month (your $200 credit covers this)
+
+    http_port: 8080
+
+    health_check:
+      http_path: /api/healthz
+      initial_delay_seconds: 30
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+
+    envs:
+      # Database (automatically set by App Platform)
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${secondbrain-db.DATABASE_URL}
+
+      # Security
+      - key: SECRET_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: "teEP8kwNfh1OkOtTyPnXsllJzePRIZ_5Q4D3N6EyGbE"
+
+      - key: ENVIRONMENT
+        scope: RUN_TIME
+        value: "production"
+
+      - key: DEBUG
+        scope: RUN_TIME
+        value: "false"
+
+      - key: ENABLE_HTTPS
+        scope: RUN_TIME
+        value: "true"
+
+      - key: LOG_LEVEL
+        scope: RUN_TIME
+        value: "INFO"
+
+      # Server
+      - key: HOST
+        scope: RUN_TIME
+        value: "0.0.0.0"
+
+      - key: PORT
+        scope: RUN_TIME
+        value: "8080"
+
+      # CORS - Update with your GitHub Pages URL
+      - key: CORS_ORIGINS
+        scope: RUN_TIME
+        value: "https://octopus-ai-secondbrain.github.io"
+
+      # Optional: OpenAI API Key (can also be set in app settings)
+      - key: OPENAI_API_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ""  # Optional - can set later
+
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    github:
+      repo: Octopus-AI-SecondBrain/Octopus-AI-SecondBrain.github.io
+      branch: main
+    source_dir: /backend
+    run_command: alembic upgrade head
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs

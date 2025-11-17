@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, FileText, Network, Search, Settings } from 'lucide-react'
+import { Home, FileText, Network, Search, Settings, Brain } from 'lucide-react'
 import { motion } from 'framer-motion'
 import OctopusIcon from '../OctopusIcon'
 
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/app/notes', icon: FileText, label: 'Notes' },
   { to: '/app/map', icon: Network, label: 'Neural Map' },
   { to: '/app/search', icon: Search, label: 'Search' },
+  { to: '/app/knowledge', icon: Brain, label: 'Knowledge Base' },
 ]
 
 export default function Sidebar() {
