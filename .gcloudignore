@@ -1,0 +1,76 @@
+# Google Cloud Build ignore file
+# https://cloud.google.com/cloud-build/docs/build-config-file-schema#including_and_excluding_files_from_source_upload
+
+# Git files
+.git
+.gitignore
+.github
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+*.egg-info/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!README.md
+docs/
+examples/
+
+# Frontend (not needed for backend build)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Test files
+backend/tests/
+tests/
+*.test.py
+pytest.ini
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Local development
+.env
+.env.local
+*.local
+docker-compose.yml
+Dockerfile.local
+
+# Deployment configs for other platforms
+.do/
+infra/Dockerfile.backend
+deploy_digitalocean.sh
+DIGITALOCEAN_DEPLOY.md
+
+# Data and logs
+data/
+logs/
+*.log
+
+# Other
+TODO.md
+PLAN.md
